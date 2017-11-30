@@ -1,7 +1,7 @@
 {
     "address": "http://localhost/esp8266/bedroom",
     "app_name": "Bedroom local sim ",
-    "is_powered ": true,
-    "on-url ": "action.php?relay=true",
-    "off-url ": "action.php?relay=false"
+    "is_powered": true,
+    "on_url": "action.php?relay=true",
+    "off_url": "action.php?relay=false"
 }
