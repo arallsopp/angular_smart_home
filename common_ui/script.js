@@ -1,3 +1,5 @@
+'use strict';
+
 var app = angular.module('myApp', ['ngMaterial','ngCookies']);
 
 myDash.$inject = ['$scope', '$mdToast','$http','$interval','$sce','$cookies','$timeout'];
@@ -18,6 +20,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
     $scope.is_skipping_next = false;
     $scope.is_powered = false;
     $scope.is_using_timer = false;
+    $scope.percentage;
+    $scope.perc_label = '--';
 
     $scope.last_action = '--';
     $scope.events = [];
@@ -28,7 +32,15 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
 
         switch (mode) {
             case 'toggle':
-                $scope.is_powered = !$scope.is_powered;
+                $scope.is_powered = !$scope.is_powered; /* flow through */
+                if($scope.supports_percentage){
+                    if(!$scope.is_powered){
+                        $scope.percentage = 0;
+                    }else if ($scope.percentage == 0) {
+                        $scope.percentage = 1;
+                        console.log($scope.perc_label, 'is', $scope.percentage);
+                    }
+                }
             case 'relay':
                 param = '?relay=' + ($scope.is_powered ? 'true' : 'false');
                 break;
@@ -88,11 +100,14 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
         $scope.is_dst = data.is_dst;
         $scope.is_using_timer = data.is_using_timer;
         $scope.is_powered = data.is_powered;
-
+        $scope.supports_percentage = (data.percentage !== undefined);
+        $scope.percentage = data.percentage;
+        $scope.perc_label = data.perc_label;
         $scope.is_skipping_next = data.is_skipping_next;
         $scope.next_event_due = data.next_event_due;
         $scope.app_version = data.app_version;
         $scope.events = data.events;
+
 
         $scope.showToast('Synchronised');
     };
@@ -132,7 +147,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
 
     $scope.loc_device_merged_in=function(data){
         console.log('checking',data);
-        newaddress = (data.address);
+        var newaddress = (data.address);
         for(var i=0;i<$scope.loc.devices.length;i++){
             if ($scope.loc.devices[i].address == data.address){
                 $scope.loc.devices[i] = data;
@@ -141,7 +156,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
             }
         }
         return false;
-    }
+    };
+
     $scope.loc_try_next_in_list = function(){
         for(var i=0;i<$scope.loc.ips_to_check.length;i++){
             if($scope.loc.ips_to_check[i].checked){
@@ -191,7 +207,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
     $scope.remoteRequest = function(address,on_url,off_url,is_powered){
         var url= 'http://' + address + '/' + (is_powered ? off_url : on_url);
         console.log('requesting: ' + url);
-        trustedUrl = $sce.trustAsResourceUrl(url);
+        var trustedUrl = $sce.trustAsResourceUrl(url);
 
         $http.jsonp(trustedUrl, {jsonpCallbackParam: 'callback'})
             .then(function onSuccess(data) {
