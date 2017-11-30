@@ -25,7 +25,10 @@
         </md-button>
     </div>
 </md-toolbar>
-
+<md-progress-linear ng-if="loc.ips_to_check.length"
+                    md-mode="determinate"
+                    class="md-warn"
+                    value="{{ loc.ip_scan_percentage }} "></md-progress-linear>
 <md-tabs md-dynamic-height md-border-bottom>
 <md-tab label="home">
     <md-content>
@@ -191,9 +194,6 @@
                 <md-divider/>
                 <div ng-if="loc.ip_scan_percentage > 0 && loc.ip_scan_percentage < 100">
                     <h3>Scanning {{loc.ip_scan_percentage}}%</h3>
-
-                    <md-progress-linear class="md-warn" md-mode="buffer" value="{{loc.devices.length}}"
-                                        md-buffer-value="{{ loc.ip_scan_percentage }} "></md-progress-linear>
 
                     <md-list class="md-dense" flex>
                         <md-subheader class="md-no-sticky">Local Device Queue</md-subheader>

@@ -185,6 +185,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
             }
         }
         console.log('all sites done.');
+        $scope.loc.ips_to_check = [];
     };
 
     $scope.remoteRequest = function(address,on_url,off_url,is_powered){
