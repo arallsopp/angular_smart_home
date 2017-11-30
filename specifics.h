@@ -252,7 +252,7 @@ void RunImplementationLoop(){
             dailyEvents[activeEvent - 1].enacted = true; //makes the feather think the cat has been fed.
             thisDevice.skippingNext = false;
           }else{
-            thisDevice.lastAction = "Set relay from schedule at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
+            thisDevice.lastAction = "Set master from schedule at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
             doEvent(activeEvent);  //pass in the index of the active event, so that we can set it to enacted, and access the label.
           }
         }
@@ -267,13 +267,13 @@ void RunImplementationLoop(){
 
 void FirstDeviceOn() {
     Serial.print("Switch 1 turn on ...");
-    thisDevice.lastAction = "Lamp powered on by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
+    thisDevice.lastAction = "Powered on by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     thisDevice.powered = true;
 }
 
 void FirstDeviceOff() {
     Serial.print("Switch 1 turn off ...");
-    thisDevice.lastAction = "Lamp turned off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
+    thisDevice.lastAction = "Powered off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     thisDevice.powered = false;
 }
 
@@ -286,19 +286,19 @@ void handleScript(){
 void handleAction(){
   Serial.println("action request");
   Serial.println(httpServer.args());  
-  bool settingRelay = (httpServer.argName(0) == "relay");
+  bool settingMaster = (httpServer.argName(0) == "master");
   bool settingSkip = (httpServer.argName(0) == "skip");
   bool settingTimer = (httpServer.argName(0) == "timer");
   bool usingCallback = (httpServer.hasArg("callback"));
   String actionResult = "";
 
-  if(settingRelay){
-    thisDevice.lastAction = "set relay from web UI at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());                 
+  if(settingMaster){
+    thisDevice.lastAction = "Set master from web UI at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     thisDevice.powered = (httpServer.arg(0)=="true"); 
     if(thisDevice.powered){
-       actionResult = "{\"message\":\"Relay turned on manually\"}";
+       actionResult = "{\"message\":\"Master turned on manually\"}";
     }else{
-       actionResult = "{\"message\":\"Relay turned off manually\"}";
+       actionResult = "{\"message\":\"Master turned off manually\"}";
     }
   }else if(settingSkip){
     thisDevice.skippingNext = (httpServer.arg(0)=="true"); 
@@ -330,21 +330,25 @@ void handleAction(){
     Serial.println("Sending response without callback");
   }
   
-  Serial.print("Relay:");  Serial.println(thisDevice.powered ? "Powered" : "Off");
+  Serial.print("Master:");  Serial.println(thisDevice.powered ? "Powered" : "Off");
   Serial.print("Timer:");  Serial.println(thisDevice.usingTimer ? "Enabled" : "Disabled");
   Serial.print("Skipping:");  Serial.println(thisDevice.skippingNext ? "Yes" : "No");
 }
 void handleStatus(){
   
   Serial.println("status request");  
-  String response = "{\"app_name\":\"" + (String) AP_NAME + "\",\"app_version\":\"" + AP_VERSION + "\",\"time_of_day\":\"" 
-                 + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
-                 + ",\"is_powered\":"        + (thisDevice.powered ? "true" : "false") 
+  String response = "{\"app_name\":\"" + (String) AP_NAME + "\""
+                 + ",\"app_version\":\"" + AP_VERSION + "\""
+                 + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
+                 + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
+                 + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
                  + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
                  + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
                  + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
                  + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
                  + ",\"last_action\":\""  + thisDevice.lastAction + "\",\"events\":[";
+
+
 
   //attempt to iterate.
   String config = "";
@@ -368,8 +372,10 @@ void handleFeatures(){
                 + ",\"app_name\":\"" + (String) AP_NAME + "\""
                 + ",\"app_desc\":\"" + (String) AP_DESC + "\""
                 + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
-                + ",\"on_url\":\"action.php?relay=true\""
-                + ",\"off_url\":\"action.php?relay=false\"});");
+                + ",\"on_url\":\"action.php?master=true\""
+                + ",\"off_url\":\"action.php?master=false\""
+                + ",\"request\": {\"base_url\":\"action.php\",\"master_param\":\"master\"}"
+                + "});");
 }
 void handleRoot(){  
   Serial.print(F("\nHomepage request"));

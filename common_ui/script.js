@@ -20,17 +20,23 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
     $scope.is_skipping_next = false;
     $scope.is_powered = false;
     $scope.is_using_timer = false;
-    $scope.percentage;
+    $scope.percentage = 0;
+    $scope.request = null;
     $scope.perc_label = '--';
 
     $scope.last_action = '--';
     $scope.events = [];
 
     $scope.doAction = function (mode) {
-        var url = 'action.php';
-        var param = '';
+        var url = $scope.request.base_url + "?";
+        var param = false;
 
         switch (mode) {
+            case 'percentage':
+                $scope.is_powered = ($scope.percentage > 0);
+                param = $scope.request.start_param + "=" + $scope.percentage ;
+                break;
+
             case 'toggle':
                 $scope.is_powered = !$scope.is_powered; /* flow through */
                 if($scope.supports_percentage){
@@ -38,17 +44,21 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
                         $scope.percentage = 0;
                     }else if ($scope.percentage == 0) {
                         $scope.percentage = 1;
-                        console.log($scope.perc_label, 'is', $scope.percentage);
                     }
+                    param = $scope.request.start_param + "=" + $scope.percentage ; /* make sure this gets sent instead of power */
+                    break;
+                }else{
+                    /* do not break, allow to flow through */
                 }
-            case 'relay':
-                param = '?relay=' + ($scope.is_powered ? 'true' : 'false');
+
+            case 'master':
+                param = $scope.request.master_param + '=' + ($scope.is_powered ? 'true' : 'false');
                 break;
             case 'timer':
-                param = '?timer=' + ($scope.is_using_timer ? 'true' : 'false');
+                param = 'timer=' + ($scope.is_using_timer ? 'true' : 'false');
                 break;
             case 'skip':
-                param = '?skip=' + ($scope.is_skipping_next ? 'true' : 'false');
+                param = 'skip=' + ($scope.is_skipping_next ? 'true' : 'false');
                 break;
             default :
                 alert('did not understand')
@@ -83,20 +93,19 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
 
         $scope.loc_try_next_in_list();
 
-    }
-
+    };
 
     $scope.getPowerStyle = function(){
         if(!$scope.is_powered){
+
             return {'color': 'rgba(255, 255, 255, 0.3)'};
         }
     };
 
-    $scope.updateUI = function (data) {
+    $scope.updateUI = function (data) { /* from status.php */
         $scope.time_of_day = data.time_of_day;
         $scope.last_action = data.last_action;
         $scope.app_name = data.app_name;
-        document.title = data.app_name;
         $scope.is_dst = data.is_dst;
         $scope.is_using_timer = data.is_using_timer;
         $scope.is_powered = data.is_powered;
@@ -107,7 +116,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
         $scope.next_event_due = data.next_event_due;
         $scope.app_version = data.app_version;
         $scope.events = data.events;
-
+        $scope.request = data.request;
+        document.title = data.app_name;
 
         $scope.showToast('Synchronised');
     };
