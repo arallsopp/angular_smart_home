@@ -39,7 +39,7 @@ typedef struct {
   String lastAction;
 } progLogic;
 
-progLogic thisDevice = {false, false, false, false,false,"Powered on"};
+progLogic thisDevice = {false, true, false, true,false,"Powered on"};
 
 typedef struct {
   byte h;
