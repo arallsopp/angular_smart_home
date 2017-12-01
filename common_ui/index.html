@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <link rel="icon" href="https://image.flaticon.com/icons/png/128/115/115976.png">
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
     <title>--</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
@@ -37,6 +37,7 @@
             <md-list-item class="md-2-line" ng-show="!supports_percentage">
                 <div class="md-list-item-text">
                     <h3>Power</h3>
+
                     <p>Turn the {{app_name}} {{ is_powered ? 'off' : 'on' }}</p>
                 </div>
                 <md-switch ng-change="doAction('master')" ng-model="is_powered"></md-switch>
@@ -47,13 +48,15 @@
                     <h3>{{perc_label}}: {{percentage}}</h3>
                 </div>
                 <div class="md-list-item-text" style="padding:0 8px">
-                    <md-slider  flex min="0" max="100" ng-model="percentage" ng-click="doAction('percentage')" aria-label="{{perc_label}}"></md-slider>
+                    <md-slider flex min="0" max="100" ng-model="percentage" ng-click="doAction('percentage')"
+                               aria-label="{{perc_label}}"></md-slider>
                 </div>
                 <md-divider/>
             </md-list-item>
             <md-list-item class="md-2-line">
                 <div class="md-list-item-text">
                     <h3>Timer</h3>
+
                     <p>{{ is_using_timer ? 'Next event in ' + next_event_due + ' mins' : 'Turn timer on' }}</p>
                 </div>
                 <md-switch ng-change="doAction('timer')" ng-model="is_using_timer"></md-switch>
@@ -62,6 +65,7 @@
             <md-list-item class="md-2-line" ng-class="{ inactive: !is_using_timer }">
                 <div class="md-list-item-text">
                     <h3>Skip Next</h3>
+
                     <p>{{ is_using_timer ? (is_skipping_next ? 'Next scheduled event will be skipped' : 'Override the
                         next
                         scheduled event') : 'Requires timer mode' }}</p>
@@ -116,7 +120,8 @@
                            ng-model="loc_device.is_powered"></md-switch>
                 <md-button ng-if="loc_device.off_url === undefined" class="md-raised md-primary"
                            ng-click="remoteRequest(loc_device.address,loc_device.on_url,null,false)">
-                trigger</md-button>
+                    trigger
+                </md-button>
                 <md-divider/>
 
             </md-list-item>
@@ -145,146 +150,147 @@
 <md-tab label="Settings">
     <div layout="column" layout-gt-sm="row">
 
-    <md-card flex="50">
-        <md-content class="md-padding">
-            <h3>Local ESP8266 Devices</h3>
+        <md-card flex="50">
+            <md-content class="md-padding">
+                <h3>Local ESP8266 Devices</h3>
 
-            <p class="md-caption">
-                Search for local devices for the following IP range.
-            </p>
+                <p class="md-caption">
+                    Search for local devices for the following IP range.
+                </p>
 
-            <div layout="column" layout-gt-xs="row">
+                <div layout="column" layout-gt-xs="row">
 
-                <md-input-container flex="50">
-                    <label>Start at: 192.168.1.</label>
-                    <input required type="number" ng-model="loc.ip_range_start"
-                           min="1" max="255"/>
+                    <md-input-container flex="50">
+                        <label>Start at: 192.168.1.</label>
+                        <input required type="number" ng-model="loc.scan.ip_range_start"
+                               min="1" max="255"/>
 
-                    <div ng-messages="loc.ip_range_start.$error" role="alert">
-                        <div ng-message-exp="['required', 'min', 'max']">
-                            IP Range must be between 1 and 255.
-                        </div>
-                    </div>
-                </md-input-container>
-                <md-input-container flex="50">
-                    <label>End at: 192.168.1:<strong>{{loc.ip_range_end}}</strong></label>
-                    <input required type="number" ng-model="loc.ip_range_end"
-                           min="1" max="255"/>
-
-                    <div ng-messages="loc.ip_range_end.$error" role="alert">
-                        <div ng-message-exp="['required', 'min', 'max']">
-                            IP Range must be between 1 and 255.
-                        </div>
-                    </div>
-                </md-input-container>
-            </div>
-            <div layout="column" layout-gt-xs="row">
-
-                <md-input-container flex="50">
-                    <md-checkbox ng-model="loc.store_detected" aria-label="store detected">
-                        Allow this browser to store addresses of detected devices.
-                    </md-checkbox>
-                </md-input-container>
-                <md-input-container flex="50">
-                    <md-checkbox ng-model="loc.replace_detected" aria-label="replace detected">
-                        Replace existing local list with these results.
-                    </md-checkbox>
-                </md-input-container>
-
-            </div>
-
-            <md-button class="md-button md-raised md-primary" ng-click="loc_detect_devices()">Detect Local Devices
-            </md-button>
-
-            <div>
-                <br/>
-                <md-divider/>
-                <div ng-if="loc.ip_scan_percentage > 0 && loc.ip_scan_percentage < 100">
-                    <h3>Scanning {{loc.ip_scan_percentage}}%</h3>
-
-                    <md-list class="md-dense" flex>
-                        <md-subheader class="md-no-sticky">Local Device Queue</md-subheader>
-                        <md-list-item class="md-2-line" ng-repeat="ip in loc.ips_to_check">
-                            <div class="md-list-item-text">
-                                <h3>{{ip.ip_address}}</h3>
-
-                                <p>{{ (ip.checked ? "Request Sent" : "Pending") }} - {{ip.result}}
-                                    <md-progress-linear ng-if="ip.result == 'waiting for response...'"
-                                                        md-mode="indeterminate"></md-progress-linear>
-                                </p>
-
+                        <div ng-messages="loc.scan.ip_range_start.$error" role="alert">
+                            <div ng-message-exp="['required', 'min', 'max']">
+                                IP Range must be between 1 and 255.
                             </div>
-                            <md-divider></md-divider>
-                        </md-list-item>
-                    </md-list>
+                        </div>
+                    </md-input-container>
+                    <md-input-container flex="50">
+                        <label>End at: 192.168.1:<strong>{{loc.scan.ip_range_end}}</strong></label>
+                        <input required type="number" ng-model="loc.scan.ip_range_end"
+                               min="1" max="255"/>
+
+                        <div ng-messages="loc.scan.ip_range_end.$error" role="alert">
+                            <div ng-message-exp="['required', 'min', 'max']">
+                                IP Range must be between 1 and 255.
+                            </div>
+                        </div>
+                    </md-input-container>
+                </div>
+                <div layout="column" layout-gt-xs="row">
+
+                    <md-input-container flex="50">
+                        <md-checkbox ng-model="loc.store_detected" aria-label="store detected">
+                            Allow this browser to store addresses of detected devices.
+                        </md-checkbox>
+                    </md-input-container>
+                    <md-input-container flex="50">
+                        <md-checkbox ng-model="loc.replace_detected" aria-label="replace detected">
+                            Replace existing local list with these results.
+                        </md-checkbox>
+                    </md-input-container>
+
                 </div>
 
-                <h3>Current Status</h3>
+                <md-button class="md-button md-raised md-primary" ng-click="loc_detect_devices()">Detect Local Devices
+                </md-button>
 
-                <p class="md-caption">Found {{loc.devices.length}} devices.</p>
-            </div>
-        </md-content>
-    </md-card>
-    <md-card flex="50">
-        <md-content class="md-padding">
-            <h3>TP-Link Authentication</h3>
+                <div>
+                    <br/>
+                    <md-divider/>
+                    <div ng-if="loc.ip_scan_percentage > 0 && loc.ip_scan_percentage < 100">
+                        <h3>Scanning {{loc.ip_scan_percentage}}%</h3>
 
-            <p class="md-caption">
-                Please provide the credentials used to connect to your TP-Link account.
-            </p>
+                        <md-list class="md-dense" flex>
+                            <md-subheader class="md-no-sticky">Local Device Queue</md-subheader>
+                            <md-list-item class="md-2-line" ng-repeat="ip in loc.ips_to_check">
+                                <div class="md-list-item-text">
+                                    <h3>{{ip.ip_address}}</h3>
 
-            <div layout="column" layout-gt-xs="row">
+                                    <p>{{ (ip.checked ? "Request Sent" : "Pending") }} - {{ip.result}}
+                                        <md-progress-linear ng-if="ip.result == 'waiting for response...'"
+                                                            md-mode="indeterminate"></md-progress-linear>
+                                    </p>
 
-                <md-input-container flex="50">
-                    <label>Username/Email</label>
-                    <input required type="email" ng-model="tpl.username"
-                           minlength="10" maxlength="100" ng-pattern="/^.+@.+\..+$/"/>
-
-                    <div ng-messages="tpl.username.$error" role="alert">
-                        <div ng-message-exp="['required', 'minlength', 'maxlength', 'pattern']">
-                            Your email must be between 10 and 100 characters long and look like an e-mail address.
-                        </div>
+                                </div>
+                                <md-divider></md-divider>
+                            </md-list-item>
+                        </md-list>
                     </div>
-                </md-input-container>
-                <md-input-container flex="50">
-                    <label>Password</label>
-                    <input required ng-model="tpl.password"/>
 
-                    <div ng-messages="tpl.password.$error" role="alert">
-                        <div ng-message-exp="['required']">
-                            Password must be provided.
+                    <h3>Current Status</h3>
+
+                    <p class="md-caption">Found {{loc.devices.length}} devices.</p>
+                </div>
+            </md-content>
+        </md-card>
+        <md-card flex="50">
+            <md-content class="md-padding">
+                <h3>TP-Link Authentication</h3>
+
+                <p class="md-caption">
+                    Please provide the credentials used to connect to your TP-Link account.
+                </p>
+
+                <div layout="column" layout-gt-xs="row">
+
+                    <md-input-container flex="50">
+                        <label>Username/Email</label>
+                        <input required type="email" ng-model="tpl.username"
+                               minlength="10" maxlength="100" ng-pattern="/^.+@.+\..+$/"/>
+
+                        <div ng-messages="tpl.username.$error" role="alert">
+                            <div ng-message-exp="['required', 'minlength', 'maxlength', 'pattern']">
+                                Your email must be between 10 and 100 characters long and look like an e-mail address.
+                            </div>
                         </div>
-                    </div>
-                </md-input-container>
-            </div>
-            <div layout="column" layout-gt-xs="row">
+                    </md-input-container>
+                    <md-input-container flex="50">
+                        <label>Password</label>
+                        <input required ng-model="tpl.password"/>
 
-                <md-input-container flex="50">
-                    <md-checkbox ng-model="tpl.store_credentials" aria-label="store credentials">
-                        Allow this browser to store credentials.
-                    </md-checkbox>
-                </md-input-container>
-                <md-input-container flex="50">
-                    <md-checkbox ng-model="tpl.store_token" aria-label="store token">
-                        Allow this browser to store the authentication token.
-                    </md-checkbox>
-                </md-input-container>
+                        <div ng-messages="tpl.password.$error" role="alert">
+                            <div ng-message-exp="['required']">
+                                Password must be provided.
+                            </div>
+                        </div>
+                    </md-input-container>
+                </div>
+                <div layout="column" layout-gt-xs="row">
 
-            </div>
+                    <md-input-container flex="50">
+                        <md-checkbox ng-model="tpl.store_credentials" aria-label="store credentials">
+                            Allow this browser to store credentials.
+                        </md-checkbox>
+                    </md-input-container>
+                    <md-input-container flex="50">
+                        <md-checkbox ng-model="tpl.store_token" aria-label="store token">
+                            Allow this browser to store the authentication token.
+                        </md-checkbox>
+                    </md-input-container>
 
-            <md-button class="md-button md-raised md-primary" ng-click="tpl_authenticate()">Authenticate and Refresh
-                Devices
-            </md-button>
+                </div>
 
-            <div ng-if="tpl.token != ''">
-                <br/>
-                <md-divider/>
-                <h3>Current Status</h3>
+                <md-button class="md-button md-raised md-primary" ng-click="tpl_authenticate()">Authenticate and Refresh
+                    Devices
+                </md-button>
 
-                <p class="md-caption">Found {{tpl.devices.length}} devices using token: <code>{{tpl.token}}</code></p>
-            </div>
-        </md-content>
-    </md-card>
+                <div ng-if="tpl.token != ''">
+                    <br/>
+                    <md-divider/>
+                    <h3>Current Status</h3>
+
+                    <p class="md-caption">Found {{tpl.devices.length}} devices using token: <code>{{tpl.token}}</code>
+                    </p>
+                </div>
+            </md-content>
+        </md-card>
     </div>
 
 </md-tab>

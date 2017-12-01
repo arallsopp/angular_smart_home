@@ -129,8 +129,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
 
     $scope.loc_detect_devices = function() {
 
-        $cookies.put('loc_ip_range_start', $scope.loc.ip_range_start);
-        $cookies.put('loc_ip_range_end',   $scope.loc.ip_range_end);
+
+        localStorage.setItem('loc.scan',JSON.stringify($scope.loc.scan));
 
         $scope.loc.ips_to_check = [];
         $scope.loc.ips_counted = 0;
@@ -141,7 +141,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
 
         var workitout = "http://192.168.0."; //todo: this should come from status.
 
-        for (var i = $scope.loc.ip_range_start; i <= $scope.loc.ip_range_end; i++) {
+        for (var i = $scope.loc.scan.ip_range_start; i <= $scope.loc.scan.ip_range_end; i++) {
             $scope.loc.ips_to_check.push({"ip_address": workitout + i,"checked":false,"result":"Held in queue"});
         }
 
@@ -243,7 +243,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
     };
 
     $scope.loc_doStore = function(){
-        localStorage.setItem('loc_devices',JSON.stringify($scope.loc.devices));
+        localStorage.setItem('loc.devices',JSON.stringify($scope.loc.devices));
     };
 
     $scope.tpl_authenticate = function () {
@@ -263,6 +263,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
 
             $cookies.put('tpl_uuid', $scope.tpl.UUID);
             if($scope.tpl.store_credentials) {
+
                 $cookies.put('tpl_username', $scope.tpl.username);
                 $cookies.put('tpl_password', $scope.tpl.password);
                 $cookies.put('tpl_store_credentials',true);
@@ -341,17 +342,6 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
         });
     };
 
-    $scope.cookieOrValue = function(cookieKey,defaultVal){
-        var testvar = $cookies.get(cookieKey);
-
-        if(typeof(testvar) === "undefined"){
-            return defaultVal;
-        }else{
-            return testvar;
-        }
-    };
-
-
     $scope.tpl = {};
     $scope.tpl.refresh_rate = 60; //check every 5 seconds.
 
@@ -370,15 +360,18 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $cookies,$timeout) {
 
     $scope.loc = {};
     $scope.loc.store_detected = true;
-    $scope.loc.devices = JSON.parse(localStorage.getItem('loc_devices'));
+    $scope.loc.devices = JSON.parse(localStorage.getItem('loc.devices'));
     if($scope.loc.devices == null){
         $scope.loc.devices=[];
     }
 
+    $scope.loc.scan = JSON.parse(localStorage.getItem('loc.scan'));
 
-    $scope.loc.ip_range_start = parseInt($scope.cookieOrValue('loc_ip_range_start',2));
-    $scope.loc.ip_range_end   = parseInt($scope.cookieOrValue('loc_ip_range_end',255));
-    $scope.loc.ip_range_end   = parseInt($scope.cookieOrValue('loc_ip_range_end',255));
+    if($scope.loc.scan === null) {
+        $scope.loc.scan = {};
+        $scope.loc.scan.ip_range_start = 2;
+        $scope.loc.scan.ip_range_end = 40;
+    }
 
     $scope.selected_tab_index = 0;
 
