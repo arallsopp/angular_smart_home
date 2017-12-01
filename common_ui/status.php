@@ -6,10 +6,16 @@ $mode = "normal";
 
 sleep(1);
 $obj = new stdClass();
+
+if($mode == "percentage") {
+	$obj->app_name = "Sample Fader Device";
+}else if($mode == "momentary") {
+	$obj->app_name = "Momentary";
+}else{
+	$obj->app_name = "Sample Toggle Device";
+}
+$obj->app_version="27.0";
 $obj->time_of_day = date('H:i:s');
-$obj->is_dst = "false";
-$obj->next_event_due = 135;
-$obj->is_skipping_next=false;
 $obj->is_powered=true;
 
 $obj->request = new stdClass();
@@ -25,15 +31,12 @@ if($mode == "percentage") {
 	$obj->perc_label = "Brightness";
 }
 
-if($mode == "percentage") {
-	$obj->app_name = "Sample Fader Device";
-}else if($mode == "momentary") {
-	$obj->app_name = "Momentary";
-}else{
-	$obj->app_name = "Sample Toggle Device";
-}
-$obj->app_version="v27.0";
-$obj->last_action="local simulation started";
+$obj->is_dst = false;
+$obj->is_using_timer= true;
+$obj->next_event_due = 135;
+$obj->is_skipping_next=false;
+$obj->last_action="local simulation started in " + $mode + " mode.";
+
 $obj->events = array();
 
 for($i=0;$i<5;$i++) {
@@ -43,6 +46,5 @@ for($i=0;$i<5;$i++) {
 	$event->enacted = ($i<3);
 	array_push($obj->events,$event);
 }
-
 
 echo json_encode($obj);

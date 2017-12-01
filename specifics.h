@@ -343,13 +343,11 @@ void handleStatus(){
                  + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
                  + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
                  + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
+                 + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
                  + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
                  + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
-                 + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
                  + ",\"last_action\":\""  + thisDevice.lastAction + "\",\"events\":[";
-
-
-
+                 
   //attempt to iterate.
   String config = "";
   

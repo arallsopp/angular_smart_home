@@ -1,5 +1,5 @@
 <!doctype html>
-<html ng-app="myApp" ng-cloak>
+<html ng-app="myApp" ng-cloak lang="en">
 <head>
     <meta charset="utf-8">
     <link rel="icon" href="https://image.flaticon.com/icons/png/128/115/115976.png">
@@ -41,7 +41,7 @@
                     <p>Turn the {{app_name}} {{ is_powered ? 'off' : 'on' }}</p>
                 </div>
                 <md-switch ng-change="doAction('master')" ng-model="is_powered"></md-switch>
-                <md-divider/>
+                <md-divider></md-divider>
             </md-list-item>
             <md-list-item class="md-2-line" ng-show="supports_percentage">
                 <div class="md-list-item-text">
@@ -51,7 +51,7 @@
                     <md-slider flex min="0" max="100" ng-model="percentage" ng-click="doAction('percentage')"
                                aria-label="{{perc_label}}"></md-slider>
                 </div>
-                <md-divider/>
+                <md-divider></md-divider>
             </md-list-item>
             <md-list-item class="md-2-line">
                 <div class="md-list-item-text">
@@ -60,7 +60,7 @@
                     <p>{{ is_using_timer ? 'Next event in ' + next_event_due + ' mins' : 'Turn timer on' }}</p>
                 </div>
                 <md-switch ng-change="doAction('timer')" ng-model="is_using_timer"></md-switch>
-                <md-divider/>
+                <md-divider></md-divider>
             </md-list-item>
             <md-list-item class="md-2-line" ng-class="{ inactive: !is_using_timer }">
                 <div class="md-list-item-text">
@@ -72,7 +72,7 @@
                 </div>
                 <md-switch ng-disabled="!is_using_timer" ng-change="doAction('skip')"
                            ng-model="is_skipping_next"></md-switch>
-                <md-divider/>
+                <md-divider></md-divider>
             </md-list-item>
 
             <md-list class="md-dense" ng-class="{ inactive: !is_using_timer }" layout="row" layout-wrap
@@ -106,7 +106,7 @@
             </md-subheader>
 
             <md-list-item class="md-2-line" ng-repeat="loc_device in loc.devices track by $index">
-                <img ng-src="https://pbs.twimg.com/profile_images/928655749605199872/ygogGX2j.jpg" class="md-avatar"
+                <img src="https://pbs.twimg.com/profile_images/928655749605199872/ygogGX2j.jpg" class="md-avatar"
                      alt=""/>
 
                 <div class="md-list-item-text">
@@ -122,8 +122,7 @@
                            ng-click="remoteRequest(loc_device.address,loc_device.on_url,null,false)">
                     trigger
                 </md-button>
-                <md-divider/>
-
+                <md-divider></md-divider>
             </md-list-item>
 
             <md-subheader ng-if="tpl.devices.length">TP-Link Devices
@@ -131,7 +130,7 @@
             </md-subheader>
 
             <md-list-item class="md-2-line" ng-repeat="device in tpl.devices">
-                <img ng-src="https://cdn-01.independent.ie/business/technology/reviews/article35225129.ece/12d93/AUTOCROP/h342/2016-11-19_bus_26361599_I1.JPG"
+                <img src="https://cdn-01.independent.ie/business/technology/reviews/article35225129.ece/12d93/AUTOCROP/h342/2016-11-19_bus_26361599_I1.JPG"
                      class="md-avatar"
                      alt=""/>
 
@@ -142,7 +141,7 @@
                 </div>
                 <md-switch ng-change="tpl_setState($index,device.is_powered)"
                            ng-model="device.is_powered"></md-switch>
-                <md-divider/>
+                <md-divider></md-divider>
             </md-list-item>
         </md-list>
     </md-content>
@@ -203,7 +202,7 @@
 
                 <div>
                     <br/>
-                    <md-divider/>
+                    <md-divider></md-divider>
                     <div ng-if="loc.ip_scan_percentage > 0 && loc.ip_scan_percentage < 100">
                         <h3>Scanning {{loc.ip_scan_percentage}}%</h3>
 
@@ -242,10 +241,10 @@
 
                     <md-input-container flex="50">
                         <label>Username/Email</label>
-                        <input required type="email" ng-model="tpl.username"
+                        <input required type="email" ng-model="tpl.creds.username"
                                minlength="10" maxlength="100" ng-pattern="/^.+@.+\..+$/"/>
 
-                        <div ng-messages="tpl.username.$error" role="alert">
+                        <div ng-messages="tpl.creds.username.$error" role="alert">
                             <div ng-message-exp="['required', 'minlength', 'maxlength', 'pattern']">
                                 Your email must be between 10 and 100 characters long and look like an e-mail address.
                             </div>
@@ -253,7 +252,7 @@
                     </md-input-container>
                     <md-input-container flex="50">
                         <label>Password</label>
-                        <input required ng-model="tpl.password"/>
+                        <input required ng-model="tpl.creds.password"/>
 
                         <div ng-messages="tpl.password.$error" role="alert">
                             <div ng-message-exp="['required']">
@@ -265,12 +264,12 @@
                 <div layout="column" layout-gt-xs="row">
 
                     <md-input-container flex="50">
-                        <md-checkbox ng-model="tpl.store_credentials" aria-label="store credentials">
+                        <md-checkbox ng-model="tpl.creds.store" aria-label="store credentials">
                             Allow this browser to store credentials.
                         </md-checkbox>
                     </md-input-container>
                     <md-input-container flex="50">
-                        <md-checkbox ng-model="tpl.store_token" aria-label="store token">
+                        <md-checkbox ng-model="tpl.token.store" aria-label="store token">
                             Allow this browser to store the authentication token.
                         </md-checkbox>
                     </md-input-container>
@@ -281,12 +280,12 @@
                     Devices
                 </md-button>
 
-                <div ng-if="tpl.token != ''">
+                <div ng-if="tpl.token.value != ''">
                     <br/>
-                    <md-divider/>
+                    <md-divider></md-divider>
                     <h3>Current Status</h3>
 
-                    <p class="md-caption">Found {{tpl.devices.length}} devices using token: <code>{{tpl.token}}</code>
+                    <p class="md-caption">Found {{tpl.devices.length}} devices using token: <code>{{tpl.token.value}}</code>
                     </p>
                 </div>
             </md-content>
