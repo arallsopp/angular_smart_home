@@ -1,0 +1,20 @@
+{
+    "address": "192.168.0.10",
+    "app_name": "Bedroom Sim",
+    "app_version": "1.1",
+    "app_desc": "Simulation of Lamp from The Range",
+    "time_of_day": "18:03:33",
+    "is_powered": true,
+    "is_dst": false,
+    "is_using_timer": true,
+    "next_event_due": 237,
+    "is_skipping_next": false,
+    "last_action": "Powered on",
+    "request":{"base_url":"action.php","master_param":"master"},
+    "events": [
+        {"time": "8:00", "label": "wakeup", "enacted": false},
+        {"time": "8:20", "label": "power-down", "enacted": false},
+        {"time": "22:00", "label": "bed-time", "enacted": false},
+        {"time": "23:00", "label": "good-night", "enacted": false}
+    ]
+}

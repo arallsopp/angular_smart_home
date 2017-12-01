@@ -37,7 +37,6 @@
             <md-list-item class="md-2-line" ng-show="!supports_percentage">
                 <div class="md-list-item-text">
                     <h3>Power</h3>
-
                     <p>Turn the {{dash.app_name}} {{ dash.is_powered ? 'off' : 'on' }}</p>
                 </div>
                 <md-switch ng-change="doAction('master')" ng-model="dash.is_powered"></md-switch>
