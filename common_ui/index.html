@@ -40,7 +40,7 @@
 
                     <p>Turn the {{dash.app_name}} {{ dash.is_powered ? 'off' : 'on' }}</p>
                 </div>
-                <md-switch ng-change="doAction('master')" ng-model="is_powered"></md-switch>
+                <md-switch ng-change="doAction('master')" ng-model="dash.is_powered"></md-switch>
                 <md-divider></md-divider>
             </md-list-item>
             <md-list-item class="md-2-line" ng-show="supports_percentage">
@@ -102,7 +102,6 @@
 
             <md-subheader ng-if="loc.devices.length">ESP8266 Devices
                 <md-icon class="material-icons" ng-click="loc_refreshDevices()">autorenew</md-icon>
-
             </md-subheader>
 
             <md-list-item class="md-2-line" ng-repeat="loc_device in loc.devices track by $index">
@@ -111,9 +110,7 @@
 
                 <div class="md-list-item-text">
                     <h3>{{loc_device.app_name}}</h3>
-
                     <p>{{loc_device.app_desc}} - [{{loc_device.address}}]</p>
-
                 </div>
                 <md-switch ng-if="loc_device.off_url !== undefined"
                            ng-change="remoteRequest(loc_device.address,loc_device.on_url,loc_device.off_url,!loc_device.is_powered)"
