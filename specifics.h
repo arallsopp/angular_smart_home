@@ -13,7 +13,7 @@
 #define AP_NAME        "Bedroom"    //gets used for access point name on wifi configuration and mDNS
 #define ALEXA_DEVICE_1 "bedroom"   //gets used for Alexa discovery and commands (must be lowercase)
 #define AP_DESC        "Modded Lamp from The Range" //used for dash.
-#define AP_VERSION     "1.0"
+#define AP_VERSION     "1.1"
 
 /* parameters for this implementation */
 #define BLUE_LED        BUILTIN_LED          // pin for wemos D1 MINI PRO's onboard blue led
@@ -362,18 +362,42 @@ void handleStatus(){
   httpServer.send(200, "application/json",response); 
 }
 void handleFeatures(){
-  Serial.print("features request for ");
-  Serial.println(WiFi.localIP());
-  httpServer.sendHeader("Access-Control-Allow-Origin","*");
-  httpServer.sendHeader("Server","ESP8266-AA");
-  httpServer.send(200,"text/javascript", httpServer.arg("callback") + (String) "({\"address\":\"" + WiFi.localIP().toString() + "\""
+  Serial.println(F("Features request"));
+  bool usingCallback = (httpServer.hasArg("callback"));
+  String events = "";
+  String features = 
+                  "{\"address\":\"" + WiFi.localIP().toString() + "\""
                 + ",\"app_name\":\"" + (String) AP_NAME + "\""
-                + ",\"app_desc\":\"" + (String) AP_DESC + "\""
+                + ",\"app_version\":\"" + (String) AP_VERSION + "\""
+                + ",\"app_desc\":\"" + (String) AP_DESC + "\""  
+                + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
                 + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
-                + ",\"on_url\":\"action.php?master=true\""
-                + ",\"off_url\":\"action.php?master=false\""
-                + ",\"request\": {\"base_url\":\"action.php\",\"master_param\":\"master\"}"
-                + "});");
+                + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
+                + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
+                + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
+                + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
+                + ",\"last_action\":\""  + thisDevice.lastAction + "\""
+                + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
+                + (String) ",\"events\":[";
+                 
+                //attempt to iterate.   
+                for (byte i = 1; i < EVENT_COUNT; i++) {
+                  if (events!= ""){ events += ",";}
+                  events += "{\"time\":\"" + (String) dailyEvents[i].h + ":" + padDigit(dailyEvents[i].m) + "\",\"label\":\"" + dailyEvents[i].label + "\",\"enacted\":" + (dailyEvents[i].enacted ? "true" : "false") + "}";  
+                }
+ 
+  features = features + events + "]}";
+
+  if(usingCallback){
+    httpServer.send(200, "text/javascript", httpServer.arg("callback") + "(" + features + ");");
+    Serial.println("Sending response with callback");
+  }else{
+      httpServer.sendHeader("Access-Control-Allow-Origin","*");
+      httpServer.sendHeader("Server","ESP8266-AA");
+      httpServer.send(200, "application/json", features);
+    Serial.println("Sending response without callback");
+  }
+   
 }
 void handleRoot(){  
   Serial.print(F("\nHomepage request"));

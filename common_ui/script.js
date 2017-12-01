@@ -11,54 +11,55 @@ angular.module('myApp').controller('dash', myDash)
 
 function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
 
-    $scope.time_of_day = '--';
-    $scope.next_event_due = '--';
-    $scope.app_name = '--';
-    $scope.app_version = '--';
+    $scope.dash = {};
+    $scope.dash.time_of_day = '--';
+    $scope.dash.next_event_due = '--';
+    $scope.dash.app_name = '--';
+    $scope.dash.app_version = '--';
 
-    $scope.is_dst = false;
-    $scope.is_skipping_next = false;
-    $scope.is_powered = false;
-    $scope.is_using_timer = false;
-    $scope.percentage = 0;
-    $scope.request = null;
-    $scope.perc_label = '--';
-
-    $scope.last_action = '--';
-    $scope.events = [];
+    $scope.dash.is_dst = false;
+    $scope.dash.is_skipping_next = false;
+    $scope.dash.is_powered = false;
+    $scope.dash.is_using_timer = false;
+    $scope.dash.percentage = 0;
+    $scope.dash.request = null;
+    $scope.dash.perc_label = '--';
+    $scope.dash.last_action = '--';
+    $scope.dash.events = [];
 
     $scope.doAction = function (mode) {
-        var url = $scope.request.base_url + "?";
+        console.log($scope.dash);
+        var url = $scope.dash.request.base_url + "?";
         var param = false;
 
         switch (mode) {
             case 'percentage':
-                $scope.is_powered = ($scope.percentage > 0);
-                param = $scope.request.start_param + "=" + $scope.percentage ;
+                $scope.dash.is_powered = ($scope.dash.percentage > 0);
+                param = $scope.dash.request.start_param + "=" + $scope.dash.percentage ;
                 break;
 
             case 'toggle':
-                $scope.is_powered = !$scope.is_powered; /* flow through */
-                if($scope.supports_percentage){
-                    if(!$scope.is_powered){
-                        $scope.percentage = 0;
-                    }else if ($scope.percentage == 0) {
-                        $scope.percentage = 1;
+                $scope.dash.is_powered = !$scope.dash.is_powered; /* flow through */
+                if($scope.dash.supports_percentage){
+                    if(!$scope.dash.is_powered){
+                        $scope.dash.percentage = 0;
+                    }else if ($scope.dash.percentage == 0) {
+                        $scope.dash.percentage = 1;
                     }
-                    param = $scope.request.start_param + "=" + $scope.percentage ; /* make sure this gets sent instead of power */
+                    param = $scope.dash.request.start_param + "=" + $scope.dash.percentage ; /* make sure this gets sent instead of power */
                     break;
                 }else{
                     /* do not break, allow to flow through */
                 }
 
             case 'master':
-                param = $scope.request.master_param + '=' + ($scope.is_powered ? 'true' : 'false');
+                param = $scope.dash.request.master_param + '=' + ($scope.dash.is_powered ? 'true' : 'false');
                 break;
             case 'timer':
-                param = 'timer=' + ($scope.is_using_timer ? 'true' : 'false');
+                param = 'timer=' + ($scope.dash.is_using_timer ? 'true' : 'false');
                 break;
             case 'skip':
-                param = 'skip=' + ($scope.is_skipping_next ? 'true' : 'false');
+                param = 'skip=' + ($scope.dash.is_skipping_next ? 'true' : 'false');
                 break;
             default :
                 alert('did not understand')
@@ -74,7 +75,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     };
 
     $scope.loc_getStatus = function () {
-        $http.get('status.php').then(function (response) {
+        $http.get('features.json').then(function (response) {
             console.log('received', response.data);
             $scope.updateUI(response.data);
         });
@@ -96,27 +97,14 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     };
 
     $scope.getPowerStyle = function(){
-        if(!$scope.is_powered){
+        if(!$scope.dash.is_powered){
 
             return {'color': 'rgba(255, 255, 255, 0.3)'};
         }
     };
 
     $scope.updateUI = function (data) { /* from status.php */
-        $scope.time_of_day = data.time_of_day;
-        $scope.last_action = data.last_action;
-        $scope.app_name = data.app_name;
-        $scope.is_dst = data.is_dst;
-        $scope.is_using_timer = data.is_using_timer;
-        $scope.is_powered = data.is_powered;
-        $scope.supports_percentage = (data.percentage !== undefined);
-        $scope.percentage = data.percentage;
-        $scope.perc_label = data.perc_label;
-        $scope.is_skipping_next = data.is_skipping_next;
-        $scope.next_event_due = data.next_event_due;
-        $scope.app_version = data.app_version;
-        $scope.events = data.events;
-        $scope.request = data.request;
+        $scope.dash = data;
         document.title = data.app_name;
 
         $scope.showToast('Synchronised');

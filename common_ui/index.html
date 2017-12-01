@@ -20,7 +20,7 @@
 
 <md-toolbar>
     <div class="md-toolbar-tools">
-        <h2 flex md-truncate>{{app_name}}</h2>
+        <h2 flex md-truncate>{{dash.app_name}}</h2>
         <md-button class="md-icon-button">
             <i class="material-icons" ng-style="getPowerStyle()" ng-click="doAction('toggle')">power_settings_new</i>
         </md-button>
@@ -38,18 +38,18 @@
                 <div class="md-list-item-text">
                     <h3>Power</h3>
 
-                    <p>Turn the {{app_name}} {{ is_powered ? 'off' : 'on' }}</p>
+                    <p>Turn the {{dash.app_name}} {{ dash.is_powered ? 'off' : 'on' }}</p>
                 </div>
                 <md-switch ng-change="doAction('master')" ng-model="is_powered"></md-switch>
                 <md-divider></md-divider>
             </md-list-item>
             <md-list-item class="md-2-line" ng-show="supports_percentage">
                 <div class="md-list-item-text">
-                    <h3>{{perc_label}}: {{percentage}}</h3>
+                    <h3>{{dash.perc_label}}: {{dash.percentage}}</h3>
                 </div>
                 <div class="md-list-item-text" style="padding:0 8px">
                     <md-slider flex min="0" max="100" ng-model="percentage" ng-click="doAction('percentage')"
-                               aria-label="{{perc_label}}"></md-slider>
+                               aria-label="{{dash.perc_label}}"></md-slider>
                 </div>
                 <md-divider></md-divider>
             </md-list-item>
@@ -57,27 +57,27 @@
                 <div class="md-list-item-text">
                     <h3>Timer</h3>
 
-                    <p>{{ is_using_timer ? 'Next event in ' + next_event_due + ' mins' : 'Turn timer on' }}</p>
+                    <p>{{ dash.is_using_timer ? 'Next event in ' + dash.next_event_due + ' mins' : 'Turn timer on' }}</p>
                 </div>
-                <md-switch ng-change="doAction('timer')" ng-model="is_using_timer"></md-switch>
+                <md-switch ng-change="doAction('timer')" ng-model="dash.is_using_timer"></md-switch>
                 <md-divider></md-divider>
             </md-list-item>
-            <md-list-item class="md-2-line" ng-class="{ inactive: !is_using_timer }">
+            <md-list-item class="md-2-line" ng-class="{ inactive: !dash.is_using_timer }">
                 <div class="md-list-item-text">
                     <h3>Skip Next</h3>
 
-                    <p>{{ is_using_timer ? (is_skipping_next ? 'Next scheduled event will be skipped' : 'Override the
+                    <p>{{ dash.is_using_timer ? (dash.is_skipping_next ? 'Next scheduled event will be skipped' : 'Override the
                         next
                         scheduled event') : 'Requires timer mode' }}</p>
                 </div>
-                <md-switch ng-disabled="!is_using_timer" ng-change="doAction('skip')"
-                           ng-model="is_skipping_next"></md-switch>
+                <md-switch ng-disabled="!dash.is_using_timer" ng-change="doAction('skip')"
+                           ng-model="dash.is_skipping_next"></md-switch>
                 <md-divider></md-divider>
             </md-list-item>
 
-            <md-list class="md-dense" ng-class="{ inactive: !is_using_timer }" layout="row" layout-wrap
+            <md-list class="md-dense" ng-class="{ inactive: !dash.is_using_timer }" layout="row" layout-wrap
                      layout-xs="column">
-                <md-list-item class="md-3-line" flex="50" ng-repeat="event in events">
+                <md-list-item class="md-3-line" flex="50" ng-repeat="event in dash.events">
                     <div class="md-avatar">
                         <i ng-if="!event.enacted" class="material-icons" style="font-size:48px">schedule</i>
                         <i ng-if="event.enacted" class="material-icons" style="font-size:48px">check_circle</i>
@@ -300,10 +300,10 @@
 </md-tabs>
 
 <md-content class="md-padding md-caption">
-    <p>{{app_name}}
+    <p>{{dash.app_name}}
         <small>{{app_version}}.
-            <br/>Last sync: {{time_of_day}}
-            <br/>Last action: {{last_action}}
+            <br/>Last sync: {{dash.time_of_day}}
+            <br/>Last action: {{dash.last_action}}
             <br/><a href="/update">Update Software</a>
         </small>
     </p>
