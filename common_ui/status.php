@@ -1,8 +1,9 @@
 <?php
 /* echo time of day. dst value. time to next feed. version number */
-$supporting_percentage = false;
+$mode = "percentage";
+$mode = "momentary";
+$mode = "normal";
 
-session_start();
 sleep(1);
 $obj = new stdClass();
 $obj->time_of_day = date('H:i:s');
@@ -15,7 +16,7 @@ $obj->request = new stdClass();
 $obj->request->base_url     = "action.php";
 $obj->request->master_param = "master";
 
-if($supporting_percentage) {
+if($mode == "percentage") {
 	$obj->request->start_param = "start";
 	$obj->request->end_param  = "end";
 	$obj->request->time_param = "duration";
@@ -24,8 +25,10 @@ if($supporting_percentage) {
 	$obj->perc_label = "Brightness";
 }
 
-if($supporting_percentage) {
+if($mode == "percentage") {
 	$obj->app_name = "Sample Fader Device";
+}else if($mode == "momentary") {
+	$obj->app_name = "Momentary";
 }else{
 	$obj->app_name = "Sample Toggle Device";
 }
