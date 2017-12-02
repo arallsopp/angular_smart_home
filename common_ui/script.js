@@ -20,7 +20,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash.is_dst = false;
     $scope.dash.is_skipping_next = false;
     $scope.dash.is_powered = false;
-    $scope.dash.is_momentary = false;
+    $scope.dash.mode = '--';
     $scope.dash.is_using_timer = false;
     $scope.dash.percentage = 0;
     $scope.dash.request = null;
@@ -41,7 +41,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
 
             case 'toggle':
                 $scope.dash.is_powered = !$scope.dash.is_powered; /* flow through */
-                if($scope.dash.supports_percentage){
+                if($scope.dash.mode == 'percentage'){
                     if(!$scope.dash.is_powered){
                         $scope.dash.percentage = 0;
                     }else if ($scope.dash.percentage == 0) {
@@ -78,7 +78,10 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.loc_getStatus = function () {
         $http.get('features.json').then(function (response) {
             console.log('received', response.data);
-            $scope.updateUI(response.data);
+            $scope.dash = response.data;
+            document.title = response.data.app_name;
+            $scope.showToast('Synchronised');
+
         });
     };
     $scope.loc_refreshDevices = function(){
@@ -102,13 +105,6 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
 
             return {'color': 'rgba(255, 255, 255, 0.3)'};
         }
-    };
-
-    $scope.updateUI = function (data) { /* from status.php */
-        $scope.dash = data;
-        document.title = data.app_name;
-
-        $scope.showToast('Synchronised');
     };
 
     $scope.loc_getStatus();
@@ -202,8 +198,9 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         $scope.loc.ips_to_check = [];
     };
 
-    $scope.remoteRequest = function(address,on_url,off_url,is_powered){
-        var url= 'http://' + address + '/' + (is_powered ? off_url : on_url);
+    $scope.remoteRequest = function(address){
+        window.loc_devices = $scope.loc.devices
+        var url= 'http://' + address;
         console.log('requesting: ' + url);
         var trustedUrl = $sce.trustAsResourceUrl(url);
 
