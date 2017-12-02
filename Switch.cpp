@@ -67,7 +67,7 @@ void Switch::startWebServer(){
 }
  
 void Switch::handleEventservice(){
-  Serial.println(" ########## Responding to eventservice.xml ... ########\n");
+  Serial.println(F(" ########## Responding to eventservice.xml ... ########\n"));
   
   String eventservice_xml = "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
         "<actionList>"
@@ -101,7 +101,7 @@ void Switch::handleEventservice(){
 }
  
 void Switch::handleUpnpControl(){
-  Serial.println("########## Responding to  /upnp/control/basicevent1 ... ##########");      
+  Serial.println(F("########## Responding to  /upnp/control/basicevent1 ... ##########"));      
   
   String request = server->arg(0);      
   Serial.print("request:");
@@ -125,7 +125,7 @@ void Switch::handleRoot(){
 }
 
 void Switch::handleSetupXml(){
-  Serial.println(" ########## Responding to setup.xml ... ########\n");
+  Serial.println(F(" ########## Responding to setup.xml ... ########\n"));
   
   IPAddress localIP = WiFi.localIP();
   char s[16];
@@ -157,7 +157,7 @@ void Switch::handleSetupXml(){
         
     server->send(200, "text/xml", setup_xml.c_str());
     
-    Serial.print("Sending :");
+    Serial.print(F("Sending :"));
     Serial.println(setup_xml);
 }
 
