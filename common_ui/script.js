@@ -110,6 +110,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.loc_getStatus();
     $interval(function () {
         $scope.loc_getStatus();
+        $scope.loc_refreshDevices();
     }, 60 * 1000);
 
     $scope.loc_detect_devices = function() {
