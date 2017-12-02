@@ -20,6 +20,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash.is_dst = false;
     $scope.dash.is_skipping_next = false;
     $scope.dash.is_powered = false;
+    $scope.dash.is_momentary = false;
     $scope.dash.is_using_timer = false;
     $scope.dash.percentage = 0;
     $scope.dash.request = null;
@@ -53,7 +54,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
                 }
 
             case 'master':
-                param = $scope.dash.request.master_param + '=' + ($scope.dash.is_powered ? 'true' : 'false');
+                param = $scope.dash.request.master_param + '=' + ($scope.dash.mode=="momentary" ? true : ($scope.dash.is_powered ? 'true' : 'false'));
                 break;
             case 'timer':
                 param = 'timer=' + ($scope.dash.is_using_timer ? 'true' : 'false');

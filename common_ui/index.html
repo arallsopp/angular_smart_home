@@ -39,7 +39,11 @@
                     <h3>Power</h3>
                     <p>Turn the {{dash.app_name}} {{ dash.is_powered ? 'off' : 'on' }}</p>
                 </div>
-                <md-switch ng-change="doAction('master')" ng-model="dash.is_powered"></md-switch>
+                <md-switch ng-show="dash.mode=='toggle'" ng-change="doAction('master')" ng-model="dash.is_powered"></md-switch>
+                <md-button ng-show="dash.mode=='momentary'" ng-click="doAction('master')" class="md-raised md-primary">
+                    trigger
+                </md-button>
+
                 <md-divider></md-divider>
             </md-list-item>
             <md-list-item class="md-2-line" ng-show="supports_percentage">
@@ -111,10 +115,10 @@
                     <h3>{{loc_device.app_name}}</h3>
                     <p>{{loc_device.app_desc}} - [{{loc_device.address}}]</p>
                 </div>
-                <md-switch ng-if="loc_device.off_url !== undefined"
+                <md-switch ng-if="!loc_device.is_momentary"
                            ng-change="remoteRequest(loc_device.address,loc_device.on_url,loc_device.off_url,!loc_device.is_powered)"
                            ng-model="loc_device.is_powered"></md-switch>
-                <md-button ng-if="loc_device.off_url === undefined" class="md-raised md-primary"
+                <md-button ng-if="loc_device.momentary" class="md-raised md-primary"
                            ng-click="remoteRequest(loc_device.address,loc_device.on_url,null,false)">
                     trigger
                 </md-button>

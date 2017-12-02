@@ -4,6 +4,7 @@
     "app_version": "1.1",
     "app_desc": "Simulation of Lamp from The Range",
     "time_of_day": "18:03:33",
+    "mode":"toggle",
     "is_powered": true,
     "is_dst": false,
     "is_using_timer": true,
