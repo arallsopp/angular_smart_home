@@ -61,7 +61,7 @@ event_time dailyEvents[EVENT_COUNT] = {
 void setupForNewDay() {
   /* Purpose: Resets everything for the new day */
 
-  Serial.println("  Its a new day!");
+  Serial.println(F("  Its a new day!"));
   lastDayFromWeb = day();
 
   //Now reset the Events' enacted flags to false, as they've not happened for this new day.
@@ -151,23 +151,23 @@ int minsToNextEvent(int currentMinuteOfDay) {
 
   for (byte i = 1; i < EVENT_COUNT; i++) { // iterate the daily events
     int minuteOfEvent = (dailyEvents[i].h * 60) + dailyEvents[i].m;
-    Serial.print("Event ");Serial.print(dailyEvents[i].label);Serial.print(" is due at minute ");Serial.println(minuteOfEvent);
+    Serial.print(F("Event "));Serial.print(dailyEvents[i].label);Serial.print(F(" is due at minute "));Serial.println(minuteOfEvent);
         
     if (minuteOfEvent < currentMinuteOfDay){
       minuteOfEvent = minuteOfEvent + (24 * 60); //look at tomorrow's instead.
-      Serial.print("(using tomorrow's time instead, so ");Serial.println(minuteOfEvent);
+      Serial.print(F("(using tomorrow's time instead, so "));Serial.println(minuteOfEvent);
     }
 
     int thisEventDueIn = (minuteOfEvent - currentMinuteOfDay);
-    Serial.print("Event due in ");Serial.println(thisEventDueIn);
+    Serial.print(F("Event due in "));Serial.println(thisEventDueIn);
     
     if (thisEventDueIn < lowestFoundLag){
-      Serial.println(" - this is the closest so far.");
+      Serial.println(F(" - this is the closest so far."));
       lowestFoundLag = thisEventDueIn;
     }    
   }
 
-  Serial.print("Closest at end of loop is ");Serial.println(lowestFoundLag);
+  Serial.print(F("Closest at end of loop is "));Serial.println(lowestFoundLag);
 
   return lowestFoundLag;
 }
@@ -202,7 +202,7 @@ void handleLocalSwitch(){
      prevSwitchPosition = thisReading;
      nextTriggerAfter = millis() + DEBOUNCE;
     }else{
-      Serial.println("bouncing");
+      Serial.println(F("bouncing"));
     }
   }
 }
@@ -248,7 +248,7 @@ void RunImplementationLoop(){
         activeEvent =  (isEventTime(currentMinuteOfDay)); //activeEvent will be 0 if none, or the index+1 of the event struct.
         if (activeEvent > 0) {
           if(thisDevice.skippingNext){
-            Serial.println("skipping this event");
+            Serial.println(F("skipping this event"));
             thisDevice.lastAction = "Skipped the scheduled event at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
             dailyEvents[activeEvent - 1].enacted = true; //makes the feather think the cat has been fed.
             thisDevice.skippingNext = false;
@@ -273,7 +273,7 @@ void FirstDeviceOn() {
 }
 
 void FirstDeviceOff() {
-    Serial.print("Switch 1 turn off ...");
+    Serial.print(F("Switch 1 turn off ..."));
     thisDevice.lastAction = "Powered off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     thisDevice.powered = false;
 }
@@ -323,17 +323,17 @@ void handleAction(){
   
   if(usingCallback){
     httpServer.send(200, "text/javascript", httpServer.arg("callback") + "(" + actionResult + ");");
-    Serial.println("Sending response with callback");
+    Serial.println(F("Sending response with callback"));
   }else{
       httpServer.sendHeader("Access-Control-Allow-Origin","*");
       httpServer.sendHeader("Server","ESP8266-AA");
       httpServer.send(200, "application/json", actionResult);
-    Serial.println("Sending response without callback");
+    Serial.println(F("Sending response without callback"));
   }
   
-  Serial.print("Master:");  Serial.println(thisDevice.powered ? "Powered" : "Off");
-  Serial.print("Timer:");  Serial.println(thisDevice.usingTimer ? "Enabled" : "Disabled");
-  Serial.print("Skipping:");  Serial.println(thisDevice.skippingNext ? "Yes" : "No");
+  Serial.print(F("Master:"));  Serial.println(thisDevice.powered ? "Powered" : "Off");
+  Serial.print(F("Timer:"));   Serial.println(thisDevice.usingTimer ? "Enabled" : "Disabled");
+  Serial.print(F("Skipping:"));Serial.println(thisDevice.skippingNext ? "Yes" : "No");
 }
 void handleFeatures(){
   Serial.println(F("Features request"));
@@ -365,12 +365,12 @@ void handleFeatures(){
 
   if(usingCallback){
     httpServer.send(200, "text/javascript", httpServer.arg("callback") + "(" + features + ");");
-    Serial.println("Sending response with callback");
+    Serial.println(F("Sending response with callback"));
   }else{
       httpServer.sendHeader("Access-Control-Allow-Origin","*");
       httpServer.sendHeader("Server","ESP8266-AA");
       httpServer.send(200, "application/json", features);
-    Serial.println("Sending response without callback");
+    Serial.println(F("Sending response without callback"));
   }
    
 }
