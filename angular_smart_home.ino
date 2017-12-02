@@ -1,11 +1,11 @@
 /*  .
- *  angular webhost with index, script.js, action.php and status.php
- *  todo: don't need jsonp! Can set headers! see https://forum.arduino.cc/index.php?topic=476291.0
+ *  angular webhost with index, script.js and action.php
+ *  NB: don't need jsonp! Can set headers! see https://forum.arduino.cc/index.php?topic=476291.0
  *  able to update via wifi and respond to alexa requests
  *  also serves a simple dash that lets you request actions.
  *  uses wifi manager to set up wifi connections.
  *  uses corrected isDST algorithm.
- *  implementation: wifi relay
+ *  this implementation: wifi relay
 */
 
 /* based on https://github.com/kakopappa/arduino-esp8266-alexa-multiple-wemo-switch */
@@ -34,6 +34,12 @@ void handleRoot();             //repeat this in specifics.h if needed.
 void handleScript();           //repeat this in specifics.h if needed.
 void handleFeatures();         //repeat this in specifics.h if needed.
 
+int minsToNextEvent();         //overwritten after specifics.h
+void setupForNewDay();         //overwritten after specifics.h
+byte isEventTime();            //overwritten after specifics.h
+void handleScript();           //overwritten after specifics.h
+void handleRoot();             //overwritten after specifics.h
+
 // prototypes
 boolean connectWifi();
 
@@ -60,7 +66,134 @@ bool isDst(int day, int month, int dow); //defined below
 
 time_t prevDisplay = 0; // when the digital clock was displayed
 
+String padDigit(int digit){
+  String padChar = "";
+  if (digit<10){
+      padChar = "0";
+  }
+  return padChar + digit; 
+}
+
+
 #include "specifics.h"
+
+void setupForNewDay() {
+  /* Purpose: Resets everything for the new day */
+
+  Serial.println(F("  Its a new day!"));
+  lastDayFromWeb = day();
+
+  //Now reset the Events' enacted flags to false, as they've not happened for this new day.
+  for (byte i = 1; i < EVENT_COUNT; i++) {
+    Serial.print(F("    Setting the active flag for "));
+    Serial.print(dailyEvents[i].label);
+    Serial.println(F(" to false"));
+    dailyEvents[i].enacted = false;
+  }
+
+  //Check to see if we are in DST.
+  thisDevice.dst = isDst(day(), month(), weekday()); //option base 0.
+  Serial.print(F("    DST is "));
+  Serial.println(thisDevice.dst ? "ON" : "OFF");
+  
+  timeZoneOffset = (thisDevice.dst ? 1 : 0);
+}
+
+
+int minsToNextEvent(int currentMinuteOfDay) {
+
+  /* purpose: return the total number of minutes to go until the next event (could be over 60)
+     method:  compare against my global struct for daily events.
+  */
+
+  Serial.print(F("\n  Checking interval for events at minute "));
+  Serial.print(currentMinuteOfDay);
+  
+  int lowestFoundLag = 24*60; //start point. Assume no events today.
+
+  for (byte i = 1; i < EVENT_COUNT; i++) { // iterate the daily events
+    int minuteOfEvent = (dailyEvents[i].h * 60) + dailyEvents[i].m;
+    Serial.print(F("Event "));Serial.print(dailyEvents[i].label);Serial.print(F(" is due at minute "));Serial.println(minuteOfEvent);
+        
+    if (minuteOfEvent < currentMinuteOfDay){
+      minuteOfEvent = minuteOfEvent + (24 * 60); //look at tomorrow's instead.
+      Serial.print(F("(using tomorrow's time instead, so "));Serial.println(minuteOfEvent);
+    }
+
+    int thisEventDueIn = (minuteOfEvent - currentMinuteOfDay);
+    Serial.print(F("Event due in "));Serial.println(thisEventDueIn);
+    
+    if (thisEventDueIn < lowestFoundLag){
+      Serial.println(F(" - this is the closest so far."));
+      lowestFoundLag = thisEventDueIn;
+    }    
+  }
+
+  Serial.print(F("Closest at end of loop is "));Serial.println(lowestFoundLag);
+
+  return lowestFoundLag;
+}
+
+
+byte isEventTime(int currentMinuteOfDay) {
+
+  /* purpose: return the index of the event which is due.
+     method:  compare against my global struct for daily events.
+  */
+  
+  bool eventDue = false;
+  bool eventOverdue = false;
+  byte retval = 0;
+  
+  Serial.print(F("\n  Checking the scheduled events for minute "));
+  Serial.print(currentMinuteOfDay);
+  byte maxdrift = 3;        // maxdrift is the number of minutes ago that it will check for missed events
+  // you shouldn't really require this, but its possible that the connection stumbles
+  // and misses a minute.
+
+
+  for (byte i = 1; i < EVENT_COUNT; i++) { // iterate the daily events
+    int minuteOfEvent = (dailyEvents[i].h * 60) + dailyEvents[i].m;
+
+    Serial.print(F("\n    Event labelled "));
+    Serial.print(dailyEvents[i].label);
+
+    for (byte offset = 0; offset <= maxdrift; offset++) { // iterate each offset within maxdrift
+      eventDue = dailyEvents[i].enacted == false
+                &&
+                (currentMinuteOfDay == (minuteOfEvent + offset));
+      if (eventDue) {
+        Serial.print(F(": Due "));
+        Serial.print(offset);           //might be zero, might not.
+        Serial.print(F(" minutes ago"));
+        retval = i;
+      } else if (dailyEvents[i].enacted) {
+        Serial.print(F(": Already performed today."));
+      } else {
+        if ((minuteOfEvent - currentMinuteOfDay) > 0) {
+          Serial.print(F(": Not due for "));
+          Serial.print(minuteOfEvent - currentMinuteOfDay);
+          Serial.print(F(" minute(s)."));
+        } else {
+          Serial.print(F(": Missed today. Next due tomorrow."));
+        }
+      }
+    }
+  }
+  return retval;
+}
+
+void handleScript(){
+  Serial.print(F("\nScript request"));
+  httpServer.send_P ( 200, "application/javascript", SCRIPT_JS);
+  Serial.println(F("...done."));
+}
+
+void handleRoot(){  
+  Serial.print(F("\nHomepage request"));
+  httpServer.send_P ( 200, "text/html", INDEX_HTML);
+  Serial.println(F("...done."));
+}
 
 void setup(){
   Serial.begin(115200);
