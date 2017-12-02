@@ -29,8 +29,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash.events = [];
 
     $scope.doAction = function (mode) {
-        console.log($scope.dash);
-        var url = $scope.dash.request.base_url + "?";
+        /* console.log($scope.dash); */
+         var url = $scope.dash.request.base_url + "?";
         var param = false;
 
         switch (mode) {
@@ -77,7 +77,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
 
     $scope.loc_getStatus = function () {
         $http.get('features.json').then(function (response) {
-            console.log('received', response.data);
+            /* console.log('local status received', response.data); */
             $scope.dash = response.data;
             document.title = response.data.app_name;
             $scope.showToast('Synchronised');
@@ -85,7 +85,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         });
     };
     $scope.loc_refreshDevices = function(){
-        console.log('do it');
+        /* console.log('refreshing local devices '); */
 
         $scope.loc.ips_to_check = [];
         $scope.loc.ips_counted = 0;
@@ -140,12 +140,12 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     };
 
     $scope.loc_device_merged_in=function(data){
-        console.log('checking',data);
+        /* console.log('localdevice checking for merge',data); */
         var newaddress = (data.address);
         for(var i=0;i<$scope.loc.devices.length;i++){
             if ($scope.loc.devices[i].address == data.address){
                 $scope.loc.devices[i] = data;
-                console.log('merged');
+                /* console.log('merged'); */
                 return true;
             }
         }
@@ -157,14 +157,14 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
             if($scope.loc.ips_to_check[i].checked){
                 //done that one.
             }else{
-                console.log('kicking off a test for ', $scope.loc.ips_to_check[i]);
+                /* console.log('looking for local device at ', $scope.loc.ips_to_check[i]); */
                 var url = $scope.loc.ips_to_check[i].ip_address + "/features.json";
                 var trustedUrl = $sce.trustAsResourceUrl(url);
                 let index = i;
                 $scope.loc.ips_to_check[index].result = 'waiting for response...';
 
                 $http.jsonp(trustedUrl, {jsonpCallbackParam: 'callback',timeout:10000}).then(function onSuccess(data) {
-                    console.log('got something!', data.data);
+                    /* console.log('found a local device!', data.data); */
                     $scope.loc.ips_to_check[index].result = 'Found device ' + data.data.app_name;
                     //check that the device isn't in the list.
 
@@ -172,7 +172,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
                         $scope.loc.ips_to_check[index].result = 'Updated device ' + data.data.app_name;
                     }else {
                         $scope.loc.devices.push(data.data);
-                        console.log('added it');
+                        /* console.log('added this device to the local list'); */
                     }
 
                     if ($scope.loc.store_detected) {
@@ -180,7 +180,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
                     }
 
                 }).catch(function onError(response) {
-                    console.log('checked off:',index);
+                    /* console.log('No device at:', scope.loc.ips_to_check[index]); */
                     $scope.loc.ips_to_check[index].result = 'No response';
                 });
 
@@ -194,19 +194,18 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
                 return;
             }
         }
-        console.log('all sites done.');
+        /* console.log('all local IPs checked.'); */
         $scope.loc.ips_to_check = [];
     };
 
     $scope.remoteRequest = function(address){
-        window.loc_devices = $scope.loc.devices
         var url= 'http://' + address;
-        console.log('requesting: ' + url);
+        /* console.log('requesting: ' + url); */
         var trustedUrl = $sce.trustAsResourceUrl(url);
 
         $http.jsonp(trustedUrl, {jsonpCallbackParam: 'callback'})
             .then(function onSuccess(data) {
-                console.log(data.data);
+                /* console.log('success',data.data); */
                 $scope.showToast(data.data.message);
             }).catch(function onError(response) {
             });
@@ -278,12 +277,11 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
 
         $http.post("https://wap.tplinkcloud.com?token=" + $scope.tpl.token.value, request_obj).then(function mySuccess(response) {
             $scope.tpl.devices = (response.data.result.deviceList);
-            console.log($scope.tpl.devices);
+            /* console.log('refreshing ',$scope.tpl.devices); */
             if ($scope.tpl.devices.length) {
                 for (var i = 0; i < $scope.tpl.devices.length; i++) {
                     $scope.tpl_getState(i);
                 }
-
                 $scope.selected_tab_index = 0;
             }
         });
@@ -301,9 +299,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
             }
         };
         $http.post(url + "?token=" + $scope.tpl.token.value, request_obj).then(function mySuccess(response) {
-            window.response = response;
             var testval = JSON.parse(response.data.result.responseData).system.get_sysinfo.relay_state;
-            console.log(device_index, testval, response);
+            /* console.log('getting state for ', device_index, testval, response); */
 
             $scope.tpl.devices[device_index].is_powered = (testval == true);
         });
@@ -320,8 +317,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
             }
         };
         $http.post(url + "?token=" + $scope.tpl.token.value, request_obj).then(function mySuccess(response) {
-            window.response = response;
-            console.log(response);
+            /* console.log('set the state response',response); */
         });
     };
 
