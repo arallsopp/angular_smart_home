@@ -35,11 +35,12 @@ typedef struct {
   bool usingTimer;
   bool dst;
   bool powered;
+  String mode;
   bool skippingNext;
   String lastAction;
 } progLogic;
 
-progLogic thisDevice = {false, true, false, true,false,"Powered on"};
+progLogic thisDevice = {false, true, false, true,"toggle",false,"Powered on"};
 
 typedef struct {
   byte h;
@@ -334,33 +335,6 @@ void handleAction(){
   Serial.print("Timer:");  Serial.println(thisDevice.usingTimer ? "Enabled" : "Disabled");
   Serial.print("Skipping:");  Serial.println(thisDevice.skippingNext ? "Yes" : "No");
 }
-void handleStatus(){
-  
-  Serial.println("status request");  
-  String response = "{\"app_name\":\"" + (String) AP_NAME + "\""
-                 + ",\"app_version\":\"" + AP_VERSION + "\""
-                 + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
-                 + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
-                 + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
-                 + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
-                 + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
-                 + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
-                 + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
-                 + ",\"last_action\":\""  + thisDevice.lastAction + "\",\"events\":[";
-                 
-  //attempt to iterate.
-  String config = "";
-  
-  for (byte i = 1; i < EVENT_COUNT; i++) {
-    if (config!= ""){ config += ",";}
-    config += "{\"time\":\"" + (String) dailyEvents[i].h + ":" + padDigit(dailyEvents[i].m) + "\",\"label\":\"" + dailyEvents[i].label + "\",\"enacted\":" + (dailyEvents[i].enacted ? "true" : "false") + "}";  
-  }
- 
-  response = response + config + "]}";
-
-  httpServer.sendHeader("Access-Control-Allow-Origin","*");
-  httpServer.send(200, "application/json",response); 
-}
 void handleFeatures(){
   Serial.println(F("Features request"));
   bool usingCallback = (httpServer.hasArg("callback"));
@@ -371,6 +345,7 @@ void handleFeatures(){
                 + ",\"app_version\":\"" + (String) AP_VERSION + "\""
                 + ",\"app_desc\":\"" + (String) AP_DESC + "\""  
                 + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
+                + ",\"mode\":" + (thisDevice.mode) 
                 + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
                 + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
                 + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   

@@ -33,7 +33,6 @@ void RunImplementationLoop();  //repeat this in specifics.h if needed.
 void handleRoot();             //repeat this in specifics.h if needed.
 void handleScript();           //repeat this in specifics.h if needed.
 void handleFeatures();         //repeat this in specifics.h if needed.
-void handleStatus();           //repeat this in specifics.h if needed.
 
 // prototypes
 boolean connectWifi();
@@ -92,7 +91,6 @@ void setup(){
     httpServer.on("/", handleRoot);
     httpServer.on("/script.js", handleScript);
     httpServer.on("/action.php", handleAction);
-    httpServer.on("/status.php", handleStatus);
     httpServer.on("/features.json",handleFeatures);
     httpServer.begin();
 
