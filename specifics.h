@@ -228,7 +228,7 @@ void handleFeatures(){
                 + ",\"app_version\":\"" + (String) AP_VERSION + "\""
                 + ",\"app_desc\":\"" + (String) AP_DESC + "\""  
                 + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
-                + ",\"mode\":" + (thisDevice.mode) 
+                + ",\"mode\":\"" + (thisDevice.mode) + "\"" 
                 + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
                 + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
                 + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   

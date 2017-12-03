@@ -16,16 +16,16 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash.next_event_due = '--';
     $scope.dash.app_name = '--';
     $scope.dash.app_version = '--';
+    $scope.dash.mode = '--';
+    $scope.dash.perc_label = '--';
+    $scope.dash.last_action = '--';
 
     $scope.dash.is_dst = false;
     $scope.dash.is_skipping_next = false;
     $scope.dash.is_powered = false;
-    $scope.dash.mode = '--';
     $scope.dash.is_using_timer = false;
     $scope.dash.percentage = 0;
     $scope.dash.request = null;
-    $scope.dash.perc_label = '--';
-    $scope.dash.last_action = '--';
     $scope.dash.events = [];
 
     $scope.doAction = function (mode) {
@@ -124,10 +124,10 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
             $scope.loc.devices = [];
         }
 
-        var workitout = "http://192.168.0."; //todo: this should come from status.
+        var part123 = "http://" + $scope.dash.address.replace(/\d+$/g,'');
 
         for (var i = $scope.loc.scan.ip_range_start; i <= $scope.loc.scan.ip_range_end; i++) {
-            $scope.loc.ips_to_check.push({"ip_address": workitout + i,"checked":false,"result":"Held in queue"});
+            $scope.loc.ips_to_check.push({"ip_address": part123 + i,"checked":false,"result":"Held in queue"});
         }
 
         $scope.loc.ips_checked = 0;
