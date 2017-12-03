@@ -8,19 +8,22 @@
 #define AP_NAME        "Feeder"    //gets used for access point name on wifi configuration and mDNS
 #define ALEXA_DEVICE_1 "feeder"   //gets used for Alexa discovery and commands (must be lowercase)
 #define AP_DESC        "The cat sitting stool" //used for dash.
-#define AP_VERSION     "1.1"
+#define AP_VERSION     "1.1m"
+
+/* catfeeder uses gfx display, so add screen dependencies */
+#include <Wire.h>                    // required for screen
+#include <Adafruit_GFX.h>            // required for screen
+#include <Adafruit_SSD1306.h>        // required for screen
+#define OLED_RESET 13
+Adafruit_SSD1306 display(OLED_RESET); // initialises screen
 
 /* parameters for this implementation */
 #define BLUE_LED        BUILTIN_LED          // pin for wemos D1 MINI PRO's onboard blue led
 #define LED_OFF         HIGH                  // let's me flip the values if required, as the huzzah onboard LEDs are reversed.
 #define LED_ON          LOW                 // as line above.
-#define SWITCH_PIN      D2                   // pin connected to PUSH TO CLOSE switch.
-#define RELAY_PIN       D1
-#define SWITCH_WIRED_IN true
+#define MOSFET_PIN      12
 #define EVENT_COUNT     1 + 4                // zero based array. Option 0 is reserved.
 
-#define BUTTON_PUSHED          1
-#define BUTTON_RELEASED        0  
 
 int lastDayFromWeb = 0;    //I use this to detect a new date has occurred.
 int currentMinuteOfDay = 0;
@@ -35,79 +38,155 @@ typedef struct {
   String lastAction;
 } progLogic;
 
-progLogic thisDevice = {false, true, false, true,"momentary",false,"Powered on"};
+progLogic thisDevice = {false, true, false, false,"momentary",false,"Powered on"};
 
 typedef struct {
   byte h;
   byte m;
   bool enacted;
   char label[14];
-  byte powered;
+  byte powered;           
 } event_time;             // event_time is my custom data type.
 
 event_time dailyEvents[EVENT_COUNT] = {
-  { 0,  0, false, "reserved",      0},
-  { 8,  0, false, "wakeup",        1},
-  { 8, 20, false, "power-down",    0},
-  {22, 00, false, "bed-time",      1},
-  {23, 00, false, "good-night",    0}
+  { 6, 30, false, "breakfast",     1},
+  {11,  0, false, "elevenses",     1},
+  {13, 30, false, "lunch",         1},
+  {16, 00, false, "afternoon tea", 1},
+  {20, 30, false, "supper",        1}
 };                       // this is my array of dailyEvents.
 
-void doEvent(byte eventIndex = 0) {
+void doMomentary(byte portionCount){
+  Serial.print(F("Dispensing portions: ")); 
+  Serial.println(portionCount);
+  
+  digitalWrite(BLUE_LED, LED_ON);
+  digitalWrite(MOSFET_PIN, HIGH);
+  delay(2000 * portionCount);  //I'm using 2 seconds, as I have a 5RPM motor and a 60 degree serving.
+  
+  digitalWrite(BLUE_LED, LED_OFF);
+  digitalWrite(MOSFET_PIN, LOW);
+  Serial.println(F("Feed complete."));
 
+  thisDevice.powered = false;
+}
+
+void doEvent(byte eventIndex = 0) {
+  byte portionCount = dailyEvents[eventIndex].powered;
+  
   Serial.print(F("\n      called doEvent for scheduled item "));
   Serial.println(dailyEvents[eventIndex].label);
-  dailyEvents[eventIndex].enacted = true;
-  thisDevice.powered = dailyEvents[eventIndex].powered;
- 
-  Serial.println(thisDevice.powered ? "-> Powered" : "-> Off");
+  doMomentary(portionCount); 
 }
 
+void displaySplash() {
+  /* Purpose: Shows version information on OLED at startup */
 
-
-void handleLocalSwitch(){
-  static int prevSwitchPosition = 0;
-  static unsigned long nextTriggerAfter = 0;
-  const long DEBOUNCE = 500;
-  bool debounced = false;
-  int thisReading = 0;
-
-  //now read the switch and see if its changed
-  if(SWITCH_WIRED_IN){
-    thisReading  = digitalRead(SWITCH_PIN);
-  }else{
-    if (Serial.available()) {
-      int incomingByte = Serial.read();
-      thisReading = prevSwitchPosition +1;
-    }
-  }
-
-  if (thisReading != prevSwitchPosition){
-    //test for debounce
-    debounced = ( (long) ( millis() - nextTriggerAfter ) >= 0);
-
-    if(debounced){
-     Serial.print(F("toggling power level: "));
-     thisDevice.powered = !thisDevice.powered;
-     Serial.println(thisDevice.powered ? "Powered" : "Off");
-    
-     prevSwitchPosition = thisReading;
-     nextTriggerAfter = millis() + DEBOUNCE;
-    }else{
-      Serial.println(F("bouncing"));
-    }
-  }
+  display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.print(AP_NAME);
+  display.display();
 }
 
+void showTimeOnOLED(int minute = 0) {
+  /* Purpose: shows the time on the OLED screen
+              uses fillRect to draw the colon so that space is saved.
+  */
+  Serial.print(F("    Showing time for minute "));
+  Serial.print(minute);
+  Serial.print(" - ");
+  display.setTextColor(WHITE);
+  display.setTextSize(4);
+  display.setCursor(0, 0);
+
+  /* print the hour */
+  int h = (minute / 60);
+  if (h >= 24) {
+    h = h % 24;
+  }
+  if (h < 10) {
+    display.print("0");
+    Serial.print("0");
+  }
+  display.print(h);
+  Serial.print(h);
+
+  /* add dots for the colon */
+  display.fillRect(46,  7, 4, 4, WHITE);
+  display.fillRect(46, 20, 4, 4, WHITE);
+  Serial.print(":");
+
+  /* print the minute */
+  display.setCursor(52, 0);
+  int m = (minute % 60);
+  if (m < 10) {
+    display.print("0");
+    Serial.print("0");
+  }
+  display.print(m);
+  Serial.println(m);
+}
+void updateOLEDDisplay() {
+  /* Purpose: sends info to the OLED screen.
+              bigTime, feeds, the wifi status, etc.
+  */
+
+  Serial.println(F("\n  Updating OLED Display"));
+  display.clearDisplay(); //starts from scratch
+
+  /* show the time */
+  Serial.print(F("\n    Current minute of day is "));
+  Serial.print(currentMinuteOfDay);
+
+  Serial.print(F("\n    DST is "));
+  Serial.print(thisDevice.dst ? "ON" : "OFF");
+  showTimeOnOLED(currentMinuteOfDay);
+
+  /* work out how long until the next feed */
+  int totalMinsToEvent = minsToNextEvent(currentMinuteOfDay);
+  int hoursToEvent = totalMinsToEvent / 60;
+  int minsToEvent = totalMinsToEvent % 60;
+   
+  int x; int y; int w; int h;
+  int origin_x; int origin_y;
+  
+  origin_x = 102;
+  origin_y = 0;
+  w = 3; h=3;
+  for(int i=0; i<hoursToEvent; i++){
+      x = origin_x + ((i%5)*(w+1));
+      y = origin_y + ((i/5) * (h+1));
+      //printf("hour %d [%d,%d] ",i+1,x,y); 
+      display.fillRect(x, y, w,h, WHITE);
+  }
+  //printf("\n\nCurrently at %d %d\n", x,y);
+  origin_y = (y+(h+1));
+      
+  w = 1;  h=1;
+  for(int i=0; i< minsToEvent; i++){
+    x = origin_x + ((i%10)*(w+1));
+    y = origin_y + ((i/10) * (h+1));
+    //printf("min %d [%d,%d] ",i+1,x,y); 
+    display.fillRect(x, y, w,h, WHITE);
+  } //printf("\n");
+
+  display.display();
+}
 
 void RunImplementationSetup(){
   
   pinMode(BLUE_LED, OUTPUT);
-  pinMode(RELAY_PIN, OUTPUT);
-  pinMode(SWITCH_PIN, INPUT);
- 
+  pinMode(MOSFET_PIN, OUTPUT);
+  
   digitalWrite(BLUE_LED, LED_OFF);
- 
+
+  display.begin(SSD1306_SWITCHCAPVCC);
+  displaySplash();
+
+  display.print(WiFi.localIP()); display.display();
+
 }
 
 void RunImplementationLoop(){
@@ -126,6 +205,7 @@ void RunImplementationLoop(){
   if (minute(t) != minuteOfLastCheck){
 
      currentMinuteOfDay = (hour(t) * 60) + (minute(t)); //already includes DST adjustment.
+     updateOLEDDisplay();
 
      //now use currentMinuteOfDay to work out whether we should perform an event.
      if(thisDevice.usingTimer){
@@ -142,24 +222,21 @@ void RunImplementationLoop(){
           }
         }
      }
+     updateOLEDDisplay();
      minuteOfLastCheck = minute(t);
   }
-
-  handleLocalSwitch();
-  digitalWrite(RELAY_PIN, thisDevice.powered);
-  digitalWrite(BLUE_LED, (thisDevice.powered ? LED_ON : LED_OFF)); 
 }
 
 void FirstDeviceOn() {
     Serial.print("Switch 1 turn on ...");
     thisDevice.lastAction = "Powered on by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
-    thisDevice.powered = true;
+
+    doMomentary(1);
 }
 
 void FirstDeviceOff() {
     Serial.print(F("Switch 1 turn off ..."));
-    thisDevice.lastAction = "Powered off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
-    thisDevice.powered = false;
+    //no requirement for momentary.
 }
 
 void handleAction(){
@@ -172,7 +249,7 @@ void handleAction(){
   String actionResult = "";
 
   if(settingMaster){
-    thisDevice.lastAction = "Set master from web UI at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
+    thisDevice.lastAction = "Requested from web UI at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     thisDevice.powered = (httpServer.arg(0)=="true"); 
     if(thisDevice.powered){
        actionResult = "{\"message\":\"Master turned on manually\"}";
@@ -208,7 +285,10 @@ void handleAction(){
       httpServer.send(200, "application/json", actionResult);
     Serial.println(F("Sending response without callback"));
   }
-  
+
+  if((thisDevice).powered){
+    doMomentary(1);
+  }
   Serial.print(F("Master:"));  Serial.println(thisDevice.powered ? "Powered" : "Off");
   Serial.print(F("Timer:"));   Serial.println(thisDevice.usingTimer ? "Enabled" : "Disabled");
   Serial.print(F("Skipping:"));Serial.println(thisDevice.skippingNext ? "Yes" : "No");
