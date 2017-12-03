@@ -195,6 +195,46 @@ void handleRoot(){
   Serial.println(F("...done."));
 }
 
+void handleFeatures(){
+  Serial.println(F("Features request"));
+  bool usingCallback = (httpServer.hasArg("callback"));
+  String events = "";
+  String features = 
+                  "{\"address\":\"" + WiFi.localIP().toString() + "\""
+                + ",\"app_name\":\"" + (String) AP_NAME + "\""
+                + ",\"app_version\":\"" + (String) AP_VERSION + "\""
+                + ",\"app_desc\":\"" + (String) AP_DESC + "\""  
+                + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
+                + ",\"mode\":\"" + (thisDevice.mode) + "\"" 
+                + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
+                + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
+                + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
+                + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
+                + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
+                + ",\"last_action\":\""  + thisDevice.lastAction + "\""
+                + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
+                + (String) ",\"events\":[";
+                 
+                //attempt to iterate.   
+                for (byte i = 1; i < EVENT_COUNT; i++) {
+                  if (events!= ""){ events += ",";}
+                  events += "{\"time\":\"" + (String) dailyEvents[i].h + ":" + padDigit(dailyEvents[i].m) + "\",\"label\":\"" + dailyEvents[i].label + "\",\"enacted\":" + (dailyEvents[i].enacted ? "true" : "false") + "}";  
+                }
+ 
+  features = features + events + "]}";
+
+  if(usingCallback){
+    httpServer.send(200, "text/javascript", httpServer.arg("callback") + "(" + features + ");");
+    Serial.println(F("Sending response with callback"));
+  }else{
+      httpServer.sendHeader("Access-Control-Allow-Origin","*");
+      httpServer.sendHeader("Server","ESP8266-AA");
+      httpServer.send(200, "application/json", features);
+    Serial.println(F("Sending response without callback"));
+  }   
+}
+
+
 void setup(){
   Serial.begin(115200);
 
