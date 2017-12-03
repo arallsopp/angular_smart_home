@@ -16,7 +16,7 @@
 #define SWITCH_PIN      D2                   // pin connected to PUSH TO CLOSE switch.
 #define FADE_PIN        D1
 #define SWITCH_WIRED_IN true
-#define EVENT_COUNT     2                // zero based array. Option 0 is reserved.
+#define EVENT_COUNT     2 +1                // zero based array. Option 0 is reserved.
 
 #define BUTTON_PUSHED          1
 #define BUTTON_RELEASED        0  
@@ -36,7 +36,7 @@ typedef struct {
   String lastAction;
 } progLogic;
 
-progLogic thisDevice = {false, true, false, false,"percentage",false,"Powered on"};
+progLogic thisDevice = {false, true, false, false,"percentage",0,"Brightness",false,"Powered on"};
 
 typedef struct {
   byte h;
@@ -48,6 +48,7 @@ typedef struct {
 } event_time;             // event_time is my custom data type.
 
 event_time dailyEvents[EVENT_COUNT] = {
+  { 0,  0, false, "reserved",           0,      0},
   {19, 30, false, "evening fade in", 1023,   5*60},
   {22,  0, false, "night fade out",     0, 120*60}
 };                       // this is my array of dailyEvents.
