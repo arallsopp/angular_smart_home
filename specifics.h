@@ -1,18 +1,13 @@
 /* notes:
- * blinds and catfeeder are using feather huzzah.
- * bedroom lamp and teddy night light 
- * todo: keep next event last event somewhere visible.
- * todo: individual refresh.
- * todo: serial print can go quiet, should I remove?
- * think about adding days of week to schedule.
- * think about allowing someone to choose the schedule via web ui.
- * html has an error. it doesn't poll the local devices for updates.
+ * this implementation is the momentary catfeeder.
+ * it uses a feather huzzah.
+ * todo: all of the differences in the code
 */ 
 
 /* nomenclature */
-#define AP_NAME        "Bedroom"    //gets used for access point name on wifi configuration and mDNS
-#define ALEXA_DEVICE_1 "bedroom"   //gets used for Alexa discovery and commands (must be lowercase)
-#define AP_DESC        "Modded Lamp from The Range" //used for dash.
+#define AP_NAME        "Feeder"    //gets used for access point name on wifi configuration and mDNS
+#define ALEXA_DEVICE_1 "feeder"   //gets used for Alexa discovery and commands (must be lowercase)
+#define AP_DESC        "The cat sitting stool" //used for dash.
 #define AP_VERSION     "1.1"
 
 /* parameters for this implementation */
@@ -40,7 +35,7 @@ typedef struct {
   String lastAction;
 } progLogic;
 
-progLogic thisDevice = {false, true, false, true,"toggle",false,"Powered on"};
+progLogic thisDevice = {false, true, false, true,"momentary",false,"Powered on"};
 
 typedef struct {
   byte h;
