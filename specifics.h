@@ -1,28 +1,22 @@
 /* notes:
- * blinds and catfeeder are using feather huzzah.
- * bedroom lamp and teddy night light 
- * todo: keep next event last event somewhere visible.
- * todo: individual refresh.
- * todo: serial print can go quiet, should I remove?
- * think about adding days of week to schedule.
- * think about allowing someone to choose the schedule via web ui.
- * html has an error. it doesn't poll the local devices for updates.
+ * this is the percentage branch.
+ * implementation: belljar
 */ 
 
 /* nomenclature */
-#define AP_NAME        "Bedroom"    //gets used for access point name on wifi configuration and mDNS
-#define ALEXA_DEVICE_1 "bedroom"   //gets used for Alexa discovery and commands (must be lowercase)
-#define AP_DESC        "Modded Lamp from The Range" //used for dash.
-#define AP_VERSION     "1.1"
+#define AP_NAME        "BellJar"    //gets used for access point name on wifi configuration and mDNS
+#define ALEXA_DEVICE_1 "bell jar"   //gets used for Alexa discovery and commands (must be lowercase)
+#define AP_DESC        "The belljar lamp in the lounge" //used for dash.
+#define AP_VERSION     "1.1p"
 
 /* parameters for this implementation */
 #define BLUE_LED        BUILTIN_LED          // pin for wemos D1 MINI PRO's onboard blue led
 #define LED_OFF         HIGH                  // let's me flip the values if required, as the huzzah onboard LEDs are reversed.
 #define LED_ON          LOW                 // as line above.
 #define SWITCH_PIN      D2                   // pin connected to PUSH TO CLOSE switch.
-#define RELAY_PIN       D1
+#define FADE_PIN        D1
 #define SWITCH_WIRED_IN true
-#define EVENT_COUNT     1 + 4                // zero based array. Option 0 is reserved.
+#define EVENT_COUNT     2                // zero based array. Option 0 is reserved.
 
 #define BUTTON_PUSHED          1
 #define BUTTON_RELEASED        0  
@@ -36,26 +30,26 @@ typedef struct {
   bool dst;
   bool powered;
   String mode;
+  byte percentage;
+  String perc_label;  
   bool skippingNext;
   String lastAction;
 } progLogic;
 
-progLogic thisDevice = {false, true, false, true,"toggle",false,"Powered on"};
+progLogic thisDevice = {false, true, false, false,"percentage",false,"Powered on"};
 
 typedef struct {
   byte h;
   byte m;
   bool enacted;
-  char label[14];
-  byte powered;
+  char label[20];
+  int target_percentage;
+  int transitionDurationInSecs;
 } event_time;             // event_time is my custom data type.
 
 event_time dailyEvents[EVENT_COUNT] = {
-  { 0,  0, false, "reserved",      0},
-  { 8,  0, false, "wakeup",        1},
-  { 8, 20, false, "power-down",    0},
-  {22, 00, false, "bed-time",      1},
-  {23, 00, false, "good-night",    0}
+  {19, 30, false, "evening fade in", 1023,   5*60},
+  {22,  0, false, "night fade out",     0, 120*60}
 };                       // this is my array of dailyEvents.
 
 void doEvent(byte eventIndex = 0) {
@@ -63,7 +57,7 @@ void doEvent(byte eventIndex = 0) {
   Serial.print(F("\n      called doEvent for scheduled item "));
   Serial.println(dailyEvents[eventIndex].label);
   dailyEvents[eventIndex].enacted = true;
-  thisDevice.powered = dailyEvents[eventIndex].powered;
+  //to fix thisDevice.powered = dailyEvents[eventIndex].powered;
  
   Serial.println(thisDevice.powered ? "-> Powered" : "-> Off");
 }
@@ -108,7 +102,7 @@ void handleLocalSwitch(){
 void RunImplementationSetup(){
   
   pinMode(BLUE_LED, OUTPUT);
-  pinMode(RELAY_PIN, OUTPUT);
+  pinMode(FADE_PIN, OUTPUT);
   pinMode(SWITCH_PIN, INPUT);
  
   digitalWrite(BLUE_LED, LED_OFF);
@@ -151,7 +145,7 @@ void RunImplementationLoop(){
   }
 
   handleLocalSwitch();
-  digitalWrite(RELAY_PIN, thisDevice.powered);
+  // to fix digitalWrite(RELAY_PIN, thisDevice.powered);
   digitalWrite(BLUE_LED, (thisDevice.powered ? LED_ON : LED_OFF)); 
 }
 

@@ -207,12 +207,20 @@ void handleFeatures(){
                 + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
                 + ",\"mode\":\"" + (thisDevice.mode) + "\"" 
                 + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
+                + (thisDevice.mode == "percentage" ? 
+                   + ",\"percentage\":" + (String) (thisDevice.percentage)
+                   + ",\"perc_label\":\"" + (String) thisDevice.perc_label + "\"" 
+                   : "")
                 + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
                 + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
                 + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
                 + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
                 + ",\"last_action\":\""  + thisDevice.lastAction + "\""
-                + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
+                + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\""
+                + (thisDevice.mode == "percentage" ? 
+                    ",\"start_param\":\"start\",\"end_param\":\"end\",\"duration_param\":\"duration\""
+                   : "")
+                + "}"
                 + (String) ",\"events\":[";
                  
                 //attempt to iterate.   
