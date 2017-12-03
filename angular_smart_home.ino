@@ -200,19 +200,27 @@ void handleFeatures(){
   bool usingCallback = (httpServer.hasArg("callback"));
   String events = "";
   String features = 
-                  "{\"address\":\"" + WiFi.localIP().toString() + "\""
-                + ",\"app_name\":\"" + (String) AP_NAME + "\""
-                + ",\"app_version\":\"" + (String) AP_VERSION + "\""
-                + ",\"app_desc\":\"" + (String) AP_DESC + "\""  
-                + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
+                  "{\"address\":\""      + WiFi.localIP().toString() + "\""
+                + ",\"app_name\":\""     + (String) AP_NAME + "\""
+                + ",\"app_version\":\""  + (String) AP_VERSION + "\""
+                + ",\"app_desc\":\""     + (String) AP_DESC + "\""  
+                + ",\"time_of_day\":\""  + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
                 + ",\"mode\":\"" + (thisDevice.mode) + "\"" 
-                + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false") 
+                + ",\"is_powered\":"     + (thisDevice.powered ? "true" : "false") 
+                + (thisDevice.mode == "percentage" ? 
+                   + ",\"percentage\":"    + (String) (thisDevice.percentage)
+                   + ",\"perc_label\":\""  + (String) thisDevice.perc_label + "\"" 
+                   : "")
                 + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
-                + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
+                + ",\"is_using_timer\":" + (thisDevice.usingTimer   ? "true" : "false")   
                 + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
                 + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
                 + ",\"last_action\":\""  + thisDevice.lastAction + "\""
-                + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
+                + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\""
+                + (thisDevice.mode == "percentage" ? 
+                    ",\"start_param\":\"start\",\"end_param\":\"end\",\"duration_param\":\"duration\""
+                   : "")
+                + "}"
                 + (String) ",\"events\":[";
                  
                 //attempt to iterate.   
@@ -257,7 +265,7 @@ void setup(){
     upnpBroadcastResponder.addDevice(*first_device);
     /*upnpBroadcastResponder.addDevice(*second_device);*/
 
-    Serial.println("Registering mDNS host"); 
+    Serial.println(F("Registering mDNS host")); 
     MDNS.begin(AP_NAME);
 
     httpUpdater.setup(&httpServer);
@@ -270,20 +278,18 @@ void setup(){
     MDNS.addService("http", "tcp", 80);
     Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", AP_NAME);
 
-    Serial.println("Looking for NTP time signal");
+    Serial.println(F("Looking for NTP time signal"));
     Udp.begin(localPort);
-    Serial.print("Local port: ");
+    Serial.print(F("Local port: "));
     Serial.println(Udp.localPort());
-    Serial.println("waiting for sync");
+    Serial.println(F("waiting for sync"));
     setSyncProvider(getNtpTime);
     setSyncInterval(300);
 
-    Serial.println("Running implementation setup");
+    Serial.println(F("Running implementation setup"));
     RunImplementationSetup();
 
-    
-    
-    Serial.println("Entering loop");
+    Serial.println(F("Entering loop"));
   }
 }
 
@@ -317,7 +323,7 @@ time_t getNtpTime(){
   IPAddress ntpServerIP; // NTP server's ip address
 
   while (Udp.parsePacket() > 0) ; // discard any previously received packets
-  Serial.println("Transmit NTP Request");
+  Serial.println(F("Transmit NTP Request"));
   // get a random server from the pool
   WiFi.hostByName(ntpServerName, ntpServerIP);
   Serial.print(ntpServerName);
@@ -328,7 +334,7 @@ time_t getNtpTime(){
   while (millis() - beginWait < 1500) {
     int size = Udp.parsePacket();
     if (size >= NTP_PACKET_SIZE) {
-      Serial.println("Receive NTP Response");
+      Serial.println(F("Receive NTP Response"));
       Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
       unsigned long secsSince1900;
       // convert four bytes starting at location 40 to a long integer
@@ -339,7 +345,7 @@ time_t getNtpTime(){
       return 1 + secsSince1900 - 2208988800UL + timeZoneOffset * SECS_PER_HOUR; //1 is the adjustment for lag.
     }
   }
-  Serial.println("No NTP Response :-(");
+  Serial.println(F("No NTP Response :-("));
   return 0; // return 0 if unable to get the time
 }
 
@@ -384,45 +390,5 @@ bool isDst(int day, int month, int dow) {
     if (month == 10) return previousSunday < 25; //the most recent sunday was not the last sunday in the month.
 
     return false; // something went wrong.
-}
-
-void handleFeatures(){
-  Serial.println(F("Features request"));
-  bool usingCallback = (httpServer.hasArg("callback"));
-  String events = "";
-  String features =
-                  "{\"address\":\"" + WiFi.localIP().toString() + "\""
-                + ",\"app_name\":\"" + (String) AP_NAME + "\""
-                + ",\"app_version\":\"" + (String) AP_VERSION + "\""
-                + ",\"app_desc\":\"" + (String) AP_DESC + "\""
-                + ",\"time_of_day\":\"" + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
-                + ",\"mode\":\"" + (thisDevice.mode) + "\""
-                + ",\"is_powered\":" + (thisDevice.powered ? "true" : "false")
-                + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false")
-                + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")
-                + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay)
-                + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")
-                + ",\"last_action\":\""  + thisDevice.lastAction + "\""
-                + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\"}"
-                + (String) ",\"events\":[";
-
-                //attempt to iterate.
-                for (byte i = 1; i < EVENT_COUNT; i++) {
-                  if (events!= ""){ events += ",";}
-                  events += "{\"time\":\"" + (String) dailyEvents[i].h + ":" + padDigit(dailyEvents[i].m) + "\",\"label\":\"" + dailyEvents[i].label + "\",\"enacted\":" + (dailyEvents[i].enacted ? "true" : "false") + "}";
-                }
-
-  features = features + events + "]}";
-
-  if(usingCallback){
-    httpServer.send(200, "text/javascript", httpServer.arg("callback") + "(" + features + ");");
-    Serial.println(F("Sending response with callback"));
-  }else{
-      httpServer.sendHeader("Access-Control-Allow-Origin","*");
-      httpServer.sendHeader("Server","ESP8266-AA");
-      httpServer.send(200, "application/json", features);
-    Serial.println(F("Sending response without callback"));
-  }
-
 }
 
