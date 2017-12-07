@@ -13,7 +13,7 @@
 #define AP_NAME        "Bedroom"    //gets used for access point name on wifi configuration and mDNS
 #define ALEXA_DEVICE_1 "bedroom"   //gets used for Alexa discovery and commands (must be lowercase)
 #define AP_DESC        "Modded Lamp from The Range" //used for dash.
-#define AP_VERSION     "1.1"
+#define AP_VERSION     "1.1t"
 
 /* parameters for this implementation */
 #define BLUE_LED        BUILTIN_LED          // pin for wemos D1 MINI PRO's onboard blue led
@@ -38,9 +38,15 @@ typedef struct {
   String mode;
   bool skippingNext;
   String lastAction;
+
+  /* unused members */
+  byte percentage;
+  String perc_label;
+  
 } progLogic;
 
-progLogic thisDevice = {false, true, false, true,"toggle",false,"Powered on"};
+progLogic thisDevice = {false, true, false, true,"toggle",false,"Powered on",
+                        0,""};
 
 typedef struct {
   byte h;
