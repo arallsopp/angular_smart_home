@@ -1,7 +1,6 @@
 /* notes:
  * this implementation is the momentary catfeeder.
- * it uses a feather huzzah.
- * todo: all of the differences in the code
+ * it uses a feather huzzah. 
 */ 
 
 /* nomenclature */
@@ -36,9 +35,15 @@ typedef struct {
   String operating_mode;
   bool skippingNext;
   String lastAction;
+
+  /* unused members */
+  byte percentage;
+  String perc_label;
+
 } progLogic;
 
-progLogic thisDevice = {false, true, false, false,"momentary",false,"Powered on"};
+progLogic thisDevice = {false, true, false, false,"momentary",false,"Powered on",
+                        0,""};
 
 typedef struct {
   byte h;
