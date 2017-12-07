@@ -29,7 +29,7 @@ typedef struct {
   bool usingTimer;
   bool dst;
   bool powered;
-  String mode;
+  String operating_mode;
   byte percentage;
   String perc_label;  
   bool skippingNext;
