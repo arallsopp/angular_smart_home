@@ -35,7 +35,7 @@ typedef struct {
   bool usingTimer;
   bool dst;
   bool powered;
-  String mode;
+  String operating_mode;
   bool skippingNext;
   String lastAction;
 
