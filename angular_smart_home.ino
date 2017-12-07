@@ -197,6 +197,7 @@ void handleRoot(){
 
 void handleFeatures(){
   Serial.println(F("Features request"));
+  
   bool usingCallback = (httpServer.hasArg("callback"));
   String events = "";
   String features = 
@@ -205,10 +206,10 @@ void handleFeatures(){
                 + ",\"app_version\":\""  + (String) AP_VERSION + "\""
                 + ",\"app_desc\":\""     + (String) AP_DESC + "\""  
                 + ",\"time_of_day\":\""  + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second()) + "\""
-                + ",\"mode\":\"" + (thisDevice.mode) + "\"" 
+                + ",\"mode\":\""         + (thisDevice.operating_mode) + "\"" 
                 + ",\"is_powered\":"     + (thisDevice.powered ? "true" : "false") 
-                + (thisDevice.mode == "percentage" ? 
-                   + ",\"percentage\":"    + (String) (thisDevice.percentage)
+                + (thisDevice.operating_mode == "percentage" ? 
+                   + ",\"percentage\":"    + (String) thisDevice.percentage
                    + ",\"perc_label\":\""  + (String) thisDevice.perc_label + "\"" 
                    : "")
                 + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
@@ -217,7 +218,7 @@ void handleFeatures(){
                 + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
                 + ",\"last_action\":\""  + thisDevice.lastAction + "\""
                 + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\""
-                + (thisDevice.mode == "percentage" ? 
+                + (thisDevice.operating_mode == "percentage" ? 
                     ",\"start_param\":\"start\",\"end_param\":\"end\",\"duration_param\":\"duration\""
                    : "")
                 + "}"
