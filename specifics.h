@@ -7,7 +7,7 @@
 #define AP_NAME        "Feeder"    //gets used for access point name on wifi configuration and mDNS
 #define ALEXA_DEVICE_1 "feeder"   //gets used for Alexa discovery and commands (must be lowercase)
 #define AP_DESC        "The cat sitting stool" //used for dash.
-#define AP_VERSION     "1.1m"
+#define AP_VERSION     "1.2m"
 
 /* catfeeder uses gfx display, so add screen dependencies */
 #include <Wire.h>                    // required for screen
@@ -21,7 +21,7 @@ Adafruit_SSD1306 display(OLED_RESET); // initialises screen
 #define LED_OFF         HIGH                  // let's me flip the values if required, as the huzzah onboard LEDs are reversed.
 #define LED_ON          LOW                 // as line above.
 #define MOSFET_PIN      12
-#define EVENT_COUNT     1 + 4                // zero based array. Option 0 is reserved.
+#define EVENT_COUNT     1 + 5                // zero based array. Option 0 is reserved.
 
 
 int lastDayFromWeb = 0;    //I use this to detect a new date has occurred.
@@ -54,6 +54,7 @@ typedef struct {
 } event_time;             // event_time is my custom data type.
 
 event_time dailyEvents[EVENT_COUNT] = {
+  { 0,  0, false, "manual",        1},
   { 6, 30, false, "breakfast",     1},
   {11,  0, false, "elevenses",     1},
   {13, 30, false, "lunch",         1},
@@ -219,11 +220,12 @@ void RunImplementationLoop(){
           if(thisDevice.skippingNext){
             Serial.println(F("skipping this event"));
             thisDevice.lastAction = "Skipped the scheduled event at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
-            dailyEvents[activeEvent - 1].enacted = true; //makes the feather think the cat has been fed.
+            dailyEvents[activeEvent].enacted = true; //makes the feather think the cat has been fed.
             thisDevice.skippingNext = false;
           }else{
             thisDevice.lastAction = "Set master from schedule at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
             doEvent(activeEvent);  //pass in the index of the active event, so that we can set it to enacted, and access the label.
+            dailyEvents[activeEvent].enacted = true; //makes the feather think the cat has been fed.
           }
         }
      }
