@@ -53,6 +53,15 @@ event_time dailyEvents[EVENT_COUNT] = {
   {22,  0, false, "night fade out",     0, 120*60}
 };                       // this is my array of dailyEvents.
 
+struct fade {
+  bool active = false;
+  unsigned long startTime = 0L;
+  long duration = 1 ;
+  int startBrightness = 0;
+  int endBrightness = 0;
+};
+struct fade thisFade; //I can populate this from the actions, and us it to update the brightness within the loop.
+
 void doEvent(byte eventIndex = 0) {
 
   Serial.print(F("\n      called doEvent for scheduled item "));
@@ -62,8 +71,6 @@ void doEvent(byte eventIndex = 0) {
  
   Serial.println(thisDevice.powered ? "-> Powered" : "-> Off");
 }
-
-
 
 void handleLocalSwitch(){
   static int prevSwitchPosition = 0;
@@ -212,5 +219,39 @@ void handleAction(){
   Serial.print(F("Master:"));  Serial.println(thisDevice.powered ? "Powered" : "Off");
   Serial.print(F("Timer:"));   Serial.println(thisDevice.usingTimer ? "Enabled" : "Disabled");
   Serial.print(F("Skipping:"));Serial.println(thisDevice.skippingNext ? "Yes" : "No");
+}
+
+void updateLEDBrightness() {
+  static int lastBrightnessLevel = 0;
+
+  if (thisFade.active) {
+    //calculate new brightness level
+    long timeElapsed = millis() - thisFade.startTime;
+    float timeAsFraction = (timeElapsed / float(thisFade.duration));
+
+    //now work out the difference between start and end brightness level.
+    int fadeTotalTravel = thisFade.endBrightness - thisFade.startBrightness;
+    float newBrightnessLevel = thisFade.startBrightness + (fadeTotalTravel * timeAsFraction);
+
+    //now convert new brightness level to the operable range.
+    thisDevice.brightness_current = (int) newBrightnessLevel;
+
+    if (timeAsFraction >= 1) {
+      if (SERIAL_OUTPUT) Serial.println("\nFade target reached. Turning off thisFade.active");
+      thisDevice.brightness_current = thisFade.endBrightness;
+      thisFade.active = false;
+    } else {
+      if (SERIAL_OUTPUT) Serial.printf("\nFading from %d to %d over %dms, currently %d (%f percent)", thisFade.startBrightness, thisFade.endBrightness, thisFade.duration, thisDevice.brightness_current, (timeAsFraction * 100));
+    }
+  }
+
+  int powerLevel = (thisDevice.brightness_current * (thisDevice.powered ? 1 : 0));
+  if (powerLevel != lastBrightnessLevel) {
+    if (SERIAL_OUTPUT) Serial.printf(" Writing new LED Brightness as %d ", thisDevice.brightness_current);
+    if (SERIAL_OUTPUT) Serial.printf("(powered equiv %d)\n", powerLevel);
+    analogWrite(thisDevice.fadePin, powerLevel);
+    analogWrite(BUILTIN_LED, MAX_BRIGHTNESS - powerLevel);
+    lastBrightnessLevel = powerLevel;
+  }
 }
 
