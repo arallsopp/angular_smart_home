@@ -5,7 +5,8 @@
  *  also serves a simple dash that lets you request actions.
  *  uses wifi manager to set up wifi connections.
  *  uses corrected isDST algorithm.
- *  this implementation: wifi relay
+ *  does not use 3 strike attempt at time
+ *  todo: refactor minsToNextEvent so that it sets minsToNextEvent and NameOfNextEvent, then have the JSON return it and the UI show it.
 */
 
 /* based on https://github.com/kakopappa/arduino-esp8266-alexa-multiple-wemo-switch */
@@ -147,10 +148,6 @@ byte isEventTime(int currentMinuteOfDay) {
   
   Serial.print(F("\n  Checking the scheduled events for minute "));
   Serial.print(currentMinuteOfDay);
-  byte maxdrift = 3;        // maxdrift is the number of minutes ago that it will check for missed events
-  // you shouldn't really require this, but its possible that the connection stumbles
-  // and misses a minute.
-
 
   for (byte i = 1; i < EVENT_COUNT; i++) { // iterate the daily events
     int minuteOfEvent = (dailyEvents[i].h * 60) + dailyEvents[i].m;
@@ -158,25 +155,21 @@ byte isEventTime(int currentMinuteOfDay) {
     Serial.print(F("\n    Event labelled "));
     Serial.print(dailyEvents[i].label);
 
-    for (byte offset = 0; offset <= maxdrift; offset++) { // iterate each offset within maxdrift
-      eventDue = dailyEvents[i].enacted == false
-                &&
-                (currentMinuteOfDay == (minuteOfEvent + offset));
-      if (eventDue) {
-        Serial.print(F(": Due "));
-        Serial.print(offset);           //might be zero, might not.
-        Serial.print(F(" minutes ago"));
-        retval = i;
-      } else if (dailyEvents[i].enacted) {
-        Serial.print(F(": Already performed today."));
+    eventDue = dailyEvents[i].enacted == false
+               &&
+               currentMinuteOfDay == minuteOfEvent;
+    if (eventDue) {
+      Serial.print(F(": Due "));
+      retval = i;
+    } else if (dailyEvents[i].enacted) {
+      Serial.print(F(": Already performed today."));
+    } else {
+      if ((minuteOfEvent - currentMinuteOfDay) > 0) {
+        Serial.print(F(": Not due for "));
+        Serial.print(minuteOfEvent - currentMinuteOfDay);
+        Serial.print(F(" minute(s)."));
       } else {
-        if ((minuteOfEvent - currentMinuteOfDay) > 0) {
-          Serial.print(F(": Not due for "));
-          Serial.print(minuteOfEvent - currentMinuteOfDay);
-          Serial.print(F(" minute(s)."));
-        } else {
-          Serial.print(F(": Missed today. Next due tomorrow."));
-        }
+        Serial.print(F(": Missed today. Next due tomorrow."));
       }
     }
   }
@@ -332,7 +325,7 @@ time_t getNtpTime(){
   Serial.println(ntpServerIP);
   sendNTPpacket(ntpServerIP);
   uint32_t beginWait = millis();
-  while (millis() - beginWait < 1500) {
+  while (millis() - beginWait < 0){ // 1500) {
     int size = Udp.parsePacket();
     if (size >= NTP_PACKET_SIZE) {
       Serial.println(F("Receive NTP Response"));
