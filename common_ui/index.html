@@ -60,7 +60,7 @@
                 <div class="md-list-item-text">
                     <h3>Timer</h3>
 
-                    <p>{{ dash.is_using_timer ? 'Enacting ' + dash.next_event_name + ' in ' + dash.next_event_due + ' mins' : 'Turn timer on' }}</p>
+                    <p>{{ dash.is_using_timer ? (dash.is_skipping_next ? 'Skipping ' : 'Enacting ') + dash.next_event_name + ' in ' + dash.next_event_due + ' mins' : 'Turn timer on' }}</p>
                 </div>
                 <md-switch ng-change="doAction('timer')" ng-model="dash.is_using_timer"></md-switch>
                 <md-divider></md-divider>
