@@ -14,6 +14,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash = {};
     $scope.dash.time_of_day = '--';
     $scope.dash.next_event_due = '--';
+    $scope.dash.next_event_name = '--';
     $scope.dash.app_name = '--';
     $scope.dash.app_version = '--';
     $scope.dash.mode = '--';

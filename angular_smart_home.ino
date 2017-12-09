@@ -1,12 +1,11 @@
 /*  .
  *  angular webhost with index, script.js and action.php
- *  NB: don't need jsonp! Can set headers! see https://forum.arduino.cc/index.php?topic=476291.0
+ *  supports JSONP if required.
  *  able to update via wifi and respond to alexa requests
  *  also serves a simple dash that lets you request actions.
  *  uses wifi manager to set up wifi connections.
  *  uses corrected isDST algorithm.
  *  does not use 3 strike attempt at time
- *  todo: refactor minsToNextEvent so that it sets minsToNextEvent and NameOfNextEvent, then have the JSON return it and the UI show it.
 */
 
 /* based on https://github.com/kakopappa/arduino-esp8266-alexa-multiple-wemo-switch */
@@ -34,12 +33,14 @@ void RunImplementationLoop();  //repeat this in specifics.h if needed.
 void handleRoot();             //repeat this in specifics.h if needed.
 void handleScript();           //repeat this in specifics.h if needed.
 void handleFeatures();         //repeat this in specifics.h if needed.
-
-int minsToNextEvent();         //overwritten after specifics.h
 void setupForNewDay();         //overwritten after specifics.h
-byte isEventTime();            //overwritten after specifics.h
+byte updateEventTimes();       //overwritten after specifics.h
 void handleScript();           //overwritten after specifics.h
 void handleRoot();             //overwritten after specifics.h
+
+int indexOfNextEvent;          //allows me to find the details of the next event due.
+int minsToNextEvent;           //tracks when the next event will happen.
+
 
 // prototypes
 boolean connectWifi();
@@ -100,52 +101,17 @@ void setupForNewDay() {
   timeZoneOffset = (thisDevice.dst ? 1 : 0);
 }
 
-
-int minsToNextEvent(int currentMinuteOfDay) {
-
-  /* purpose: return the total number of minutes to go until the next event (could be over 60)
-     method:  compare against my global struct for daily events.
-  */
-
-  Serial.print(F("\n  Checking interval for events at minute "));
-  Serial.print(currentMinuteOfDay);
-  
-  int lowestFoundLag = 24*60; //start point. Assume no events today.
-
-  for (byte i = 1; i < EVENT_COUNT; i++) { // iterate the daily events
-    int minuteOfEvent = (dailyEvents[i].h * 60) + dailyEvents[i].m;
-    Serial.print(F("Event "));Serial.print(dailyEvents[i].label);Serial.print(F(" is due at minute "));Serial.println(minuteOfEvent);
-        
-    if (minuteOfEvent < currentMinuteOfDay){
-      minuteOfEvent = minuteOfEvent + (24 * 60); //look at tomorrow's instead.
-      Serial.print(F("(using tomorrow's time instead, so "));Serial.println(minuteOfEvent);
-    }
-
-    int thisEventDueIn = (minuteOfEvent - currentMinuteOfDay);
-    Serial.print(F("Event due in "));Serial.println(thisEventDueIn);
-    
-    if (thisEventDueIn < lowestFoundLag){
-      Serial.println(F(" - this is the closest so far."));
-      lowestFoundLag = thisEventDueIn;
-    }    
-  }
-
-  Serial.print(F("Closest at end of loop is "));Serial.println(lowestFoundLag);
-
-  return lowestFoundLag;
-}
-
-
 byte isEventTime(int currentMinuteOfDay) {
 
-  /* purpose: return the index of the event which is due.
+  /* purpose: update indexOfNextEvent and minsToNextEvent, and return the index of the due event (if it exists.
      method:  compare against my global struct for daily events.
   */
   
   bool eventDue = false;
   bool eventOverdue = false;
   byte retval = 0;
-  
+  int lowestFoundLag = 24*60; //start point. Assume no events today.
+
   Serial.print(F("\n  Checking the scheduled events for minute "));
   Serial.print(currentMinuteOfDay);
 
@@ -158,11 +124,13 @@ byte isEventTime(int currentMinuteOfDay) {
     eventDue = dailyEvents[i].enacted == false
                &&
                currentMinuteOfDay == minuteOfEvent;
+
     if (eventDue) {
       Serial.print(F(": Due "));
-      retval = i;
-    } else if (dailyEvents[i].enacted) {
-      Serial.print(F(": Already performed today."));
+      indexOfNextEvent = i;          
+      minsToNextEvent = 0;
+      retval = i; //have this value to return later.
+      
     } else {
       if ((minuteOfEvent - currentMinuteOfDay) > 0) {
         Serial.print(F(": Not due for "));
@@ -170,8 +138,17 @@ byte isEventTime(int currentMinuteOfDay) {
         Serial.print(F(" minute(s)."));
       } else {
         Serial.print(F(": Missed today. Next due tomorrow."));
+        minuteOfEvent = minuteOfEvent + (24 * 60); //look at tomorrow's instead.
+      }
+
+      if ((minuteOfEvent - currentMinuteOfDay) < lowestFoundLag){
+        lowestFoundLag = (minuteOfEvent - currentMinuteOfDay);
+        indexOfNextEvent = i;
+        minsToNextEvent = lowestFoundLag;
+        
       }
     }
+
   }
   return retval;
 }
@@ -205,9 +182,10 @@ void handleFeatures(){
                    + ",\"percentage\":"    + (String) thisDevice.percentage
                    + ",\"perc_label\":\""  + (String) thisDevice.perc_label + "\"" 
                    : "")
-                + ",\"is_dst\":"         + (thisDevice.dst ? "true" : "false") 
-                + ",\"is_using_timer\":" + (thisDevice.usingTimer   ? "true" : "false")   
-                + ",\"next_event_due\":" + minsToNextEvent(currentMinuteOfDay) 
+                + ",\"is_dst\":"            + (thisDevice.dst ? "true" : "false") 
+                + ",\"is_using_timer\":"    + (thisDevice.usingTimer   ? "true" : "false")   
+                + ",\"next_event_due\":"    + minsToNextEvent
+                + ",\"next_event_name\":\"" + dailyEvents[indexOfNextEvent].label + "\""
                 + ",\"is_skipping_next\":"  + (thisDevice.skippingNext ? "true" : "false")   
                 + ",\"last_action\":\""  + thisDevice.lastAction + "\""
                 + ",\"request\":{\"base_url\":\"action.php\",\"master_param\":\"master\""

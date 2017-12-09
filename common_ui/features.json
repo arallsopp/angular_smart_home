@@ -9,6 +9,7 @@
     "is_dst": false,
     "is_using_timer": true,
     "next_event_due": 237,
+    "next_event_name":"a task",
     "is_skipping_next": false,
     "last_action": "Powered on",
     "request":{"base_url":"action.php","master_param":"master"},
