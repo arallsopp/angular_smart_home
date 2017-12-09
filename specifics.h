@@ -17,7 +17,6 @@
 #define LED_ON          LOW                 // as line above.
 #define SWITCH_PIN      D2                   // pin connected to PUSH TO CLOSE switch.
 #define FADE_PIN        D1
-#define SWITCH_WIRED_IN true
 #define EVENT_COUNT     2 +1                // zero based array. Option 0 is reserved.
 
 #define BUTTON_PUSHED          1
@@ -50,9 +49,9 @@ typedef struct {
 } event_time;             // event_time is my custom data type.
 
 event_time dailyEvents[EVENT_COUNT] = {
-  { 0,  0, false, "reserved",           0,      0},
-  { 0,  1, false, "evening fade in",  100,     60},
-  { 0,  3, false, "night fade out",     0,     60}
+  { 0,  0, false, "reserved",           0,        0},
+  { 18, 5, false, "evening light up",  100,    5*60},
+  { 23, 0, false, "night fade out",     0,    60*60}
 };                       // this is my array of dailyEvents.
 
 struct fade {
@@ -100,15 +99,13 @@ void updateLEDBrightness() {
       thisDevice.percentage = thisFade.endBrightness;
       thisFade.active = false;
     } else {
-       Serial.printf("\nFading from %d to %d over %dms, currently %d (%f percent)", thisFade.startBrightness, thisFade.endBrightness, thisFade.duration, thisDevice.percentage, (timeAsFraction * 100));
+       Serial.printf("\n%f percent of transition from %d to %d over %dms. At level %d (%d PWM)", (timeAsFraction * 100), thisFade.startBrightness, thisFade.endBrightness, thisFade.duration, thisDevice.percentage, newBrightnessLevel * 10.23);
     }
      thisDevice.powered = newBrightnessLevel > 0;
 
 
     int powerLevel = (newBrightnessLevel * 10.23) * (thisDevice.powered ? 1 : 0);
     if (powerLevel != lastBrightnessLevel) {
-      Serial.printf(" Writing new LED Brightness as %d ", thisDevice.percentage);
-      Serial.printf("(powered equiv %d)\n", powerLevel);
       analogWrite(FADE_PIN, powerLevel);
       analogWrite(BUILTIN_LED, 1023 - powerLevel);
       lastBrightnessLevel = powerLevel;
@@ -117,36 +114,28 @@ void updateLEDBrightness() {
 }
 
 void handleLocalSwitch(){
-  static int prevSwitchPosition = 0;
-  static unsigned long nextTriggerAfter = 0;
-  const long DEBOUNCE = 500;
-  bool debounced = false;
-  int thisReading = 0;
+  static bool lastValue;
+  static unsigned long ignoreUntil = 0UL;
 
-  //now read the switch and see if its changed
-  if(SWITCH_WIRED_IN){
-    thisReading  = digitalRead(SWITCH_PIN);
-  }else{
-    if (Serial.available()) {
-      int incomingByte = Serial.read();
-      thisReading = prevSwitchPosition +1;
-    }
-  }
+  bool buttonState = (digitalRead(SWITCH_PIN) == HIGH);
+  if (buttonState != lastValue) {
+    //check the debounce
+    if (millis() > ignoreUntil) {
+      lastValue = buttonState;
+      ignoreUntil = millis() + 100UL;
+      Serial.println(F("Enacting, and setting debounce for 1/10th sec"));
 
-  if (thisReading != prevSwitchPosition){
-    //test for debounce
-    debounced = ( (long) ( millis() - nextTriggerAfter ) >= 0);
-
-    if(debounced){
-     Serial.print(F("toggling power level: "));
-     thisDevice.powered = !thisDevice.powered;
-     thisFade.active = false;
-     Serial.println(thisDevice.powered ? "Powered" : "Off");
+      //now toggle the brightness
+      if(thisDevice.percentage > 50){
+        dailyEvents[0].target_percentage = 0;
+      }else{
+        dailyEvents[0].target_percentage = 100;
+      }
     
-     prevSwitchPosition = thisReading;
-     nextTriggerAfter = millis() + DEBOUNCE;
-    }else{
-      Serial.println(F("bouncing"));
+      dailyEvents[0].transitionDurationInSecs = 3;
+      doEvent(0);
+    } else {
+      Serial.println(F("Debouncing"));
     }
   }
 }
@@ -204,13 +193,20 @@ void RunImplementationLoop(){
 void FirstDeviceOn() {
     Serial.print("Switch 1 turn on ...");
     thisDevice.lastAction = "Powered on by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
-    thisDevice.powered = true;
+    
+    dailyEvents[0].target_percentage = 100;
+    dailyEvents[0].transitionDurationInSecs = 3;
+    doEvent(0);
 }
 
 void FirstDeviceOff() {
     Serial.print(F("Switch 1 turn off ..."));
     thisDevice.lastAction = "Powered off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
-    thisDevice.powered = false;
+
+    dailyEvents[0].target_percentage = 0;
+    dailyEvents[0].transitionDurationInSecs = 3;
+    doEvent(0);
+
 }
 
 void handleAction(){
@@ -247,7 +243,7 @@ void handleAction(){
     }
   }else if(settingStart){
     dailyEvents[0].target_percentage = httpServer.arg(0).toInt();
-    dailyEvents[0].transitionDurationInSecs = 5;
+    dailyEvents[0].transitionDurationInSecs = 3;
     doEvent(0);
        actionResult = "{\"message\":\"Set brightness\"}";    
   }else{
