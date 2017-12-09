@@ -1,15 +1,13 @@
 /* notes:
- * this is the percentage branch.
- * implementation: belljar
- * largely there, except that the attempts to check things didn't get skipped means that it does it all 3 times.
- * I don't need that in any of the code, tbh.
+ * this is the astronomy branch.
+ * implementation: blinds
 */ 
 
 /* nomenclature */
-#define AP_NAME        "BellJar"    //gets used for access point name on wifi configuration and mDNS
-#define ALEXA_DEVICE_1 "bell jar"   //gets used for Alexa discovery and commands (must be lowercase)
-#define AP_DESC        "The belljar lamp in the lounge" //used for dash.
-#define AP_VERSION     "1.1p"
+#define AP_NAME        "Blind"      //gets used for access point name on wifi configuration and mDNS
+#define ALEXA_DEVICE_1 "blind"      //gets used for Alexa discovery and commands (must be lowercase)
+#define AP_DESC        "The kitchen blinds"     //used for dash.
+#define AP_VERSION     "1.0a"
 
 /* parameters for this implementation */
 #define BLUE_LED        BUILTIN_LED          // pin for wemos D1 MINI PRO's onboard blue led
