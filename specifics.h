@@ -151,9 +151,8 @@ void updateOLEDDisplay() {
   showTimeOnOLED(currentMinuteOfDay);
 
   /* work out how long until the next feed */
-  int totalMinsToEvent = minsToNextEvent(currentMinuteOfDay);
-  int hoursToEvent = totalMinsToEvent / 60;
-  int minsToEvent = totalMinsToEvent % 60;
+  int hoursToEvent = minsToNextEvent / 60;
+  int minsToEvent =  minsToNextEvent % 60;
    
   int x; int y; int w; int h;
   int origin_x; int origin_y;
