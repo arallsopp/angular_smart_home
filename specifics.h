@@ -49,9 +49,9 @@ typedef struct {
 } event_time;             // event_time is my custom data type.
 
 event_time dailyEvents[EVENT_COUNT] = {
-  { 0,  0, false, "reserved",           0,        0},
-  { 18, 5, false, "evening light up",  100,    5*60},
-  { 23, 0, false, "night fade out",     0,    60*60}
+  {  0, 0, false, "reserved",            0,       0},
+  { 18, 0, false, "evening light up",  100,   30*60},
+  { 23, 0, false, "night fade out",      0,   60*60}
 };                       // this is my array of dailyEvents.
 
 struct fade {
