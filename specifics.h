@@ -1,6 +1,8 @@
 /* notes:
  * this is the percentage branch.
  * implementation: belljar
+ * largely there, except that the attempts to check things didn't get skipped means that it does it all 3 times.
+ * I don't need that in any of the code, tbh.
 */ 
 
 /* nomenclature */
@@ -49,8 +51,8 @@ typedef struct {
 
 event_time dailyEvents[EVENT_COUNT] = {
   { 0,  0, false, "reserved",           0,      0},
-  {19, 30, false, "evening fade in", 1023,   5*60},
-  {22,  0, false, "night fade out",     0, 120*60}
+  { 0,  1, false, "evening fade in",  100,     60},
+  { 0,  3, false, "night fade out",     0,     60}
 };                       // this is my array of dailyEvents.
 
 struct fade {
@@ -61,6 +63,7 @@ struct fade {
   int endBrightness = 0;
 };
 struct fade thisFade; //I can populate this from the actions, and us it to update the brightness within the loop.
+//as you're only changing LED on fade, alexa and buttons should set thisFade.
 
 void doEvent(byte eventIndex = 0) {
 
@@ -68,8 +71,49 @@ void doEvent(byte eventIndex = 0) {
   Serial.println(dailyEvents[eventIndex].label);
   dailyEvents[eventIndex].enacted = true;
   //to fix thisDevice.powered = dailyEvents[eventIndex].powered;
+  thisFade.active = true;
+  thisFade.startTime = millis();
+  thisFade.duration = dailyEvents[eventIndex].transitionDurationInSecs * 1000;
+  thisFade.startBrightness = thisDevice.percentage;
+  thisFade.endBrightness = dailyEvents[eventIndex].target_percentage;
  
   Serial.println(thisDevice.powered ? "-> Powered" : "-> Off");
+}
+
+void updateLEDBrightness() {
+  static int lastBrightnessLevel = 0;
+
+  if (thisFade.active) {
+    //calculate new brightness level
+    long timeElapsed = millis() - thisFade.startTime;
+    float timeAsFraction = (timeElapsed / float(thisFade.duration));
+
+    //now work out the difference between start and end brightness level.
+    int fadeTotalTravel = thisFade.endBrightness - thisFade.startBrightness;
+    float newBrightnessLevel = thisFade.startBrightness + (fadeTotalTravel * timeAsFraction);
+
+    //now convert new brightness level to the operable range.
+    thisDevice.percentage = (int) newBrightnessLevel;
+
+    if (timeAsFraction >= 1) {
+      Serial.println("\nFade target reached. Turning off thisFade.active");
+      thisDevice.percentage = thisFade.endBrightness;
+      thisFade.active = false;
+    } else {
+       Serial.printf("\nFading from %d to %d over %dms, currently %d (%f percent)", thisFade.startBrightness, thisFade.endBrightness, thisFade.duration, thisDevice.percentage, (timeAsFraction * 100));
+    }
+     thisDevice.powered = newBrightnessLevel > 0;
+
+
+    int powerLevel = (newBrightnessLevel * 10.23) * (thisDevice.powered ? 1 : 0);
+    if (powerLevel != lastBrightnessLevel) {
+      Serial.printf(" Writing new LED Brightness as %d ", thisDevice.percentage);
+      Serial.printf("(powered equiv %d)\n", powerLevel);
+      analogWrite(FADE_PIN, powerLevel);
+      analogWrite(BUILTIN_LED, 1023 - powerLevel);
+      lastBrightnessLevel = powerLevel;
+    }
+  }
 }
 
 void handleLocalSwitch(){
@@ -96,6 +140,7 @@ void handleLocalSwitch(){
     if(debounced){
      Serial.print(F("toggling power level: "));
      thisDevice.powered = !thisDevice.powered;
+     thisFade.active = false;
      Serial.println(thisDevice.powered ? "Powered" : "Off");
     
      prevSwitchPosition = thisReading;
@@ -153,8 +198,7 @@ void RunImplementationLoop(){
   }
 
   handleLocalSwitch();
-  // to fix digitalWrite(RELAY_PIN, thisDevice.powered);
-  digitalWrite(BLUE_LED, (thisDevice.powered ? LED_ON : LED_OFF)); 
+  updateLEDBrightness(); 
 }
 
 void FirstDeviceOn() {
@@ -175,6 +219,7 @@ void handleAction(){
   bool settingMaster = (httpServer.argName(0) == "master");
   bool settingSkip = (httpServer.argName(0) == "skip");
   bool settingTimer = (httpServer.argName(0) == "timer");
+  bool settingStart = (httpServer.argName(0) == "start");
   bool usingCallback = (httpServer.hasArg("callback"));
   String actionResult = "";
 
@@ -200,6 +245,11 @@ void handleAction(){
     }else{
           actionResult = "{\"message\":\"Timer has been disabled\"}";   
     }
+  }else if(settingStart){
+    dailyEvents[0].target_percentage = httpServer.arg(0).toInt();
+    dailyEvents[0].transitionDurationInSecs = 5;
+    doEvent(0);
+       actionResult = "{\"message\":\"Set brightness\"}";    
   }else{
        actionResult = "{\"message\":\"Did not recognise action\"}";
   } 
@@ -221,37 +271,4 @@ void handleAction(){
   Serial.print(F("Skipping:"));Serial.println(thisDevice.skippingNext ? "Yes" : "No");
 }
 
-void updateLEDBrightness() {
-  static int lastBrightnessLevel = 0;
-
-  if (thisFade.active) {
-    //calculate new brightness level
-    long timeElapsed = millis() - thisFade.startTime;
-    float timeAsFraction = (timeElapsed / float(thisFade.duration));
-
-    //now work out the difference between start and end brightness level.
-    int fadeTotalTravel = thisFade.endBrightness - thisFade.startBrightness;
-    float newBrightnessLevel = thisFade.startBrightness + (fadeTotalTravel * timeAsFraction);
-
-    //now convert new brightness level to the operable range.
-    thisDevice.brightness_current = (int) newBrightnessLevel;
-
-    if (timeAsFraction >= 1) {
-      if (SERIAL_OUTPUT) Serial.println("\nFade target reached. Turning off thisFade.active");
-      thisDevice.brightness_current = thisFade.endBrightness;
-      thisFade.active = false;
-    } else {
-      if (SERIAL_OUTPUT) Serial.printf("\nFading from %d to %d over %dms, currently %d (%f percent)", thisFade.startBrightness, thisFade.endBrightness, thisFade.duration, thisDevice.brightness_current, (timeAsFraction * 100));
-    }
-  }
-
-  int powerLevel = (thisDevice.brightness_current * (thisDevice.powered ? 1 : 0));
-  if (powerLevel != lastBrightnessLevel) {
-    if (SERIAL_OUTPUT) Serial.printf(" Writing new LED Brightness as %d ", thisDevice.brightness_current);
-    if (SERIAL_OUTPUT) Serial.printf("(powered equiv %d)\n", powerLevel);
-    analogWrite(thisDevice.fadePin, powerLevel);
-    analogWrite(BUILTIN_LED, MAX_BRIGHTNESS - powerLevel);
-    lastBrightnessLevel = powerLevel;
-  }
-}
 
