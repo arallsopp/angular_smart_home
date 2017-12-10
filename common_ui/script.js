@@ -1,6 +1,6 @@
 'use strict';
 
-var app = angular.module('myApp', ['ngMaterial']);
+angular.module('myApp', ['ngMaterial']);
 
 myDash.$inject = ['$scope', '$mdToast','$http','$interval','$sce','$timeout'];
 
@@ -16,6 +16,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash.next_event_due = '--';
     $scope.dash.next_event_name = '--';
     $scope.dash.app_name = '--';
+    $scope.dash.address = '--';
     $scope.dash.app_version = '--';
     $scope.dash.mode = '--';
     $scope.dash.perc_label = '--';
@@ -28,6 +29,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash.percentage = 0;
     $scope.dash.request = null;
     $scope.dash.events = [];
+
 
     $scope.doAction = function (mode) {
         /* console.log($scope.dash); */
@@ -114,6 +116,11 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         $scope.loc_refreshDevices();
     }, 60 * 1000);
 
+    $scope.get123 = function () {
+        return $scope.dash.address.replace(/\d+$/g, '');
+    };
+
+
     $scope.loc_detect_devices = function() {
 
         localStorage.setItem('loc.scan',JSON.stringify($scope.loc.scan));
@@ -125,7 +132,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
             $scope.loc.devices = [];
         }
 
-        var part123 = "http://" + $scope.dash.address.replace(/\d+$/g,'');
+        var part123 = "http://" + $scope.get123();
 
         for (var i = $scope.loc.scan.ip_range_start; i <= $scope.loc.scan.ip_range_end; i++) {
             $scope.loc.ips_to_check.push({"ip_address": part123 + i,"checked":false,"result":"Held in queue"});
@@ -143,7 +150,6 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
 
     $scope.loc_device_merged_in=function(data){
         /* console.log('localdevice checking for merge',data); */
-        var newaddress = (data.address);
         for(var i=0;i<$scope.loc.devices.length;i++){
             if ($scope.loc.devices[i].address == data.address){
                 $scope.loc.devices[i] = data;
@@ -198,6 +204,10 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         }
         /* console.log('all local IPs checked.'); */
         $scope.loc.ips_to_check = [];
+    };
+
+    $scope.considerUpdate = function () {
+        console.log("check the slider to see if it got changed");
     };
 
     $scope.remoteRequest = function(address){
@@ -324,7 +334,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     };
 
     $scope.tpl = {};
-    $scope.tpl.refresh_rate = 60; //check every 5 seconds.
+    $scope.tpl.refresh_rate = 60;
+    /* check every 60 seconds. */
 
     $scope.tpl.devices = [];
     $scope.tpl.creds = JSON.parse(localStorage.getItem('tpl.creds'));
@@ -370,5 +381,5 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         }
     }, $scope.tpl.refresh_rate * 1000);
 
-};
+}
 
