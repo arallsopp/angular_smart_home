@@ -1,6 +1,7 @@
 /* notes:
  * this is the astronomy branch.
  * implementation: blinds
+ * using feather huzzah.
 */ 
 
 
@@ -17,7 +18,6 @@
 #define LED_OFF         HIGH                  // let's me flip the values if required, as the huzzah onboard LEDs are reversed.
 #define LED_ON          LOW                 // as line above.
 #define SWITCH_PIN      16                   // pin connected to PUSH TO CLOSE switch.
-#define FADE_PIN        D1
 #define EVENT_COUNT     4 +1                // zero based array. Option 0 is reserved.
 
 #define BUTTON_PUSHED          1
