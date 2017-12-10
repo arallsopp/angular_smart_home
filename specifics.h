@@ -54,7 +54,7 @@ typedef struct {
   String lastAction;
 } progLogic;
 
-progLogic thisDevice = {false, true, false, false,"percentage",0,"Brightness",false,"Powered on"};
+progLogic thisDevice = {false, true, false, false,"percentage",0,"Angle",false,"Powered on"};
 
 typedef struct {
   byte h;
@@ -65,11 +65,11 @@ typedef struct {
 } event_time;             // event_time is my custom data type.
 
 event_time dailyEvents[EVENT_COUNT] = {  
-  { 0, 00, false, "reserved",     0},  /* 0 */
-  { 6, 30, false, "sunrise", 16},  /* 1 */
-  { 9, 30, false, "mid-morning", 40},  /* 2 */
-  {12, 00, false, "solar noon",   104},  /* 3 */
-  {18, 30, false, "sunset",   0}   /* 4 */
+  { 0, 00, false, "reserved",             0},  /* 0 */
+  { 6, 30, false, "sunrise",             16},  /* 1 */
+  { 9, 30, false, "mid-morning",         40},  /* 2 */
+  {12, 00, false, "solar noon",         104},  /* 3 */
+  {18, 30, false, "sunset", POSITION_CLOSED}   /* 4 */
 };                            // initialises my events to a reasonable set of defaults.
 
 
@@ -235,6 +235,8 @@ void handleLocalSwitch(){
       increment = -1;
     } else if ((thisDevice.percentage + increment) < POSITION_MIN) {
       increment = 1;
+    }else{
+      //you're somewhere in the middle and all is well.
     }
     positionBlindLouvres(thisDevice.percentage + increment);
   }
@@ -342,7 +344,8 @@ void handleAction(){
     }
   }else if(settingStart){
     int targetPosition = httpServer.arg(0).toInt();
-    animateBlindLouvres(targetPosition);
+
+    animateBlindLouvres(map(targetPosition,0,100,POSITION_CLOSED,POSITION_OPEN));
     actionResult = (String) "{\"message\":\"Set position to " + targetPosition + "\"}";    
   }else{
        actionResult = "{\"message\":\"Did not recognise action\"}";
