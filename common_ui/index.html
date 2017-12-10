@@ -16,7 +16,7 @@
     </style>
 </head>
 <body layout="column" style="overflow-y:hidden">
-<div ng-controller="dash" style="overflow-y:auto" md-theme="custom">
+<div ng-controller="dash" style="overflow-y:auto" md-theme="custom" ng-mouseup="considerUpdate()">
 
 <md-toolbar>
     <div class="md-toolbar-tools">
@@ -165,7 +165,7 @@
                 <div layout="column" layout-gt-xs="row">
 
                     <md-input-container flex="50">
-                        <label>Start at: 192.168.1.</label>
+                        <label>Start at: {{ get123() }}<strong>{{loc.scan.ip_range_start}}</strong></label>
                         <input required type="number" ng-model="loc.scan.ip_range_start"
                                min="1" max="255"/>
 
@@ -176,7 +176,7 @@
                         </div>
                     </md-input-container>
                     <md-input-container flex="50">
-                        <label>End at: 192.168.1:<strong>{{loc.scan.ip_range_end}}</strong></label>
+                        <label>End at: {{ get123() }}<strong>{{loc.scan.ip_range_end}}</strong></label>
                         <input required type="number" ng-model="loc.scan.ip_range_end"
                                min="1" max="255"/>
 
