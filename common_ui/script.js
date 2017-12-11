@@ -10,6 +10,7 @@ angular.module('myApp').controller('dash', myDash)
     }]);
 
 function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
+    $scope.page_ip = '--';
 
     $scope.dash = {};
     $scope.dash.time_of_day = '--';
@@ -30,10 +31,17 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.dash.request = null;
     $scope.dash.events = [];
 
+    $scope.isRemote = function () {
+        return ($scope.dash.address != $scope.page_ip);
+    };
 
     $scope.doAction = function (mode) {
         /* console.log($scope.dash); */
          var url = $scope.dash.request.base_url + "?";
+        if ($scope.isRemote()) {
+            /* this is not the original device, so add the url prefix */
+            url = 'http://' + $scope.dash.address + '/' + url;
+        }
         var param = false;
 
         switch (mode) {
@@ -81,6 +89,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
     $scope.loc_getStatus = function () {
         $http.get('features.json').then(function (response) {
             /* console.log('local status received', response.data); */
+            $scope.page_ip = response.data.address;
             $scope.dash = response.data;
             document.title = response.data.app_name;
             $scope.showToast('Synchronised');
@@ -101,6 +110,13 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
 
         $scope.loc_try_next_in_list();
 
+    };
+
+    $scope.load_alternate_device = function (device_index) {
+        $scope.dash = $scope.loc.devices[device_index];
+        $scope.selected_tab_index = 0;
+        console.warn('need to bring over the base url, else will send wrong data');
+        console.log($scope);
     };
 
     $scope.getPowerStyle = function(){

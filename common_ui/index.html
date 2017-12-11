@@ -13,6 +13,7 @@
             background: #d1d1d1;
             opacity: 0.5;
         }
+        md-toolbar i { vertical-align: middle !important; display: inline-block; padding-bottom: 3px }
     </style>
 </head>
 <body layout="column" style="overflow-y:hidden">
@@ -20,7 +21,8 @@
 
 <md-toolbar>
     <div class="md-toolbar-tools">
-        <h2 flex md-truncate>{{dash.app_name}}</h2>
+        <h2 flex md-truncate><i ng-if="isRemote()" class="material-icons">cast</i>
+            {{dash.app_name}}</h2>
         <md-button class="md-icon-button">
             <i class="material-icons" ng-style="getPowerStyle()" ng-click="doAction('toggle')">power_settings_new</i>
         </md-button>
@@ -30,7 +32,7 @@
                     md-mode="determinate"
                     class="md-warn"
                     value="{{ loc.ip_scan_percentage }} "></md-progress-linear>
-<md-tabs md-dynamic-height md-border-bottom>
+<md-tabs md-dynamic-height md-border-bottom md-selected="selected_tab_index">
 <md-tab label="home">
     <md-content>
         <md-list>
@@ -108,6 +110,7 @@
 
             <md-list-item class="md-2-line" ng-repeat="loc_device in loc.devices track by $index">
                 <img src="https://pbs.twimg.com/profile_images/928655749605199872/ygogGX2j.jpg" class="md-avatar"
+                     ng-click="load_alternate_device($index)"
                      alt=""/>
 
                 <div class="md-list-item-text">
