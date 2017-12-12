@@ -14,7 +14,7 @@
 #define AP_VERSION     "1.0a"
 
 /* parameters for this implementation */
-#define BLUE_LED        BUILTIN_LED          // pin for wemos D1 MINI PRO's onboard blue led
+#define BLUE_LED        BUILTIN_LED          // pin for feather's onboard blue led
 #define LED_OFF         HIGH                  // let's me flip the values if required, as the huzzah onboard LEDs are reversed.
 #define LED_ON          LOW                 // as line above.
 #define SWITCH_PIN      16                   // pin connected to PUSH TO CLOSE switch.
