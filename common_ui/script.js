@@ -18,7 +18,7 @@ angular.module('myApp').controller('dash', myDash)
 
 function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
     $scope.dash = {"address": "--"};
-    $scope.network = {};
+    $scope.network = {"ips_to_check": []};
     $scope.loc = {};
 
     $scope.page_ip = '--';
@@ -117,8 +117,6 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
     $scope.load_network_device_into_dash = function (device_index) {
         $scope.dash = $scope.network.devices[device_index];
         $scope.selected_tab_index = 1;
-        console.warn('need to bring over the base url, else will send wrong data');
-        console.log($scope);
     };
 
     $scope.getPowerStyle = function(){
@@ -215,7 +213,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
             }
         }
         /* console.log('all local IPs checked.'); */
-        $scope.network.ips_to_check = [];
+//        $scope.network.ips_to_check = [];
     };
 
     $scope.considerUpdate = function () {
