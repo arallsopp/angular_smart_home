@@ -249,9 +249,7 @@ void handleAction(){
   }else{
        actionResult = "{\"message\":\"Did not recognise action\"}";
   } 
-
-  httpServer.sendHeader("Access-Control-Allow-Origin","*");
-  
+ 
   if(usingCallback){
     httpServer.send(200, "text/javascript", httpServer.arg("callback") + "(" + actionResult + ");");
     Serial.println(F("Sending response with callback"));
