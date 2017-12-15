@@ -219,13 +219,12 @@ void RunImplementationLoop(){
           if(thisDevice.skippingNext){
             Serial.println(F("skipping this event"));
             thisDevice.lastAction = "Skipped the scheduled event at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
-            dailyEvents[activeEvent].enacted = true; //makes the feather think the cat has been fed.
             thisDevice.skippingNext = false;
           }else{
             thisDevice.lastAction = "Set master from schedule at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
             doEvent(activeEvent);  //pass in the index of the active event, so that we can set it to enacted, and access the label.
-            dailyEvents[activeEvent].enacted = true; //makes the feather think the cat has been fed.
           }
+          dailyEvents[activeEvent].enacted = true; //either way, this has now happened.
         }
      }
      updateOLEDDisplay();
