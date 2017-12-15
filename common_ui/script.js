@@ -104,9 +104,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
 
         for (var i = 0; i < $scope.network.devices.length; i++) {
             $scope.network.ips_to_check.push({
-                "ip_address": "http://" + $scope.network.devices[i].address,
-                "checked": false,
-                "result": "Held in queue"
+                "ip_address": "http://" + $scope.network.devices[i].address, "checked": false, "result": "Held in queue"
             });
         }
 
@@ -392,7 +390,6 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
     }, $scope.tpl.refresh_rate * 1000);
 
     $interval(function () {
-        //    $scope.add_features_from_this_device();
         $scope.refresh_network_devices();
     }, 60 * 1000);
 
