@@ -1,5 +1,12 @@
 'use strict';
 
+/* the theory:
+
+ can I remove 'scope.dash' entirely, and load network devices screen first,
+ then have it select the device if i want to and load those details?
+
+ */
+
 angular.module('myApp', ['ngMaterial']);
 
 myDash.$inject = ['$scope', '$mdToast','$http','$interval','$sce','$timeout'];
@@ -9,31 +16,25 @@ angular.module('myApp').controller('dash', myDash)
         $mdThemingProvider.theme('custom').primaryPalette('blue-grey').accentPalette('deep-orange');
     }]);
 
-function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
+function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
+    $scope.dash = {"address": "--"};
+    $scope.network = {"ips_to_check": []};
+    $scope.loc = {};
 
-    $scope.dash = {};
-    $scope.dash.time_of_day = '--';
-    $scope.dash.next_event_due = '--';
-    $scope.dash.next_event_name = '--';
-    $scope.dash.app_name = '--';
-    $scope.dash.address = '--';
-    $scope.dash.app_version = '--';
-    $scope.dash.mode = '--';
-    $scope.dash.perc_label = '--';
-    $scope.dash.last_action = '--';
+    $scope.page_ip = '--';
 
-    $scope.dash.is_dst = false;
-    $scope.dash.is_skipping_next = false;
-    $scope.dash.is_powered = false;
-    $scope.dash.is_using_timer = false;
-    $scope.dash.percentage = 0;
-    $scope.dash.request = null;
-    $scope.dash.events = [];
+    $scope.isRemote = function () {
+        return ($scope.dash.address != $scope.page_ip);
+    };
 
 
-    $scope.doAction = function (mode) {
+    $scope.doAction = function (mode) { //todo: refactor this to read the network device index.
         /* console.log($scope.dash); */
-         var url = $scope.dash.request.base_url + "?";
+        var url = $scope.dash.request.base_url + "?";
+        if ($scope.isRemote()) {
+            /* this is not the original device, so add the url prefix */
+            url = 'http://' + $scope.dash.address + '/' + url;
+        }
         var param = false;
 
         switch (mode) {
@@ -48,7 +49,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
                     if(!$scope.dash.is_powered){
                         $scope.dash.percentage = 0;
                     }else if ($scope.dash.percentage == 0) {
-                        $scope.dash.percentage = 1;
+                        $scope.dash.percentage = 100;
                     }
                     param = $scope.dash.request.start_param + "=" + $scope.dash.percentage ; /* make sure this gets sent instead of power */
                     break;
@@ -78,29 +79,42 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         $mdToast.show($mdToast.simple().textContent(msg).position('top right'))
     };
 
-    $scope.loc_getStatus = function () {
+    $scope.add_features_from_this_device = function () {
+        /* purpose: request details from features.json and add the result into
+         the network.devices.
+         */
         $http.get('features.json').then(function (response) {
             /* console.log('local status received', response.data); */
+            $scope.page_ip = response.data.address;
             $scope.dash = response.data;
+            if (!$scope.merge_data_into_network_devices(response.data)) {
+                $scope.network.devices.push(response.data);
+            }
             document.title = response.data.app_name;
             $scope.showToast('Synchronised');
-
         });
     };
-    $scope.loc_refreshDevices = function(){
+    $scope.refresh_network_devices = function () {
         /* console.log('refreshing local devices '); */
 
-        $scope.loc.ips_to_check = [];
-        $scope.loc.ips_counted = 0;
-        $scope.loc.ips_checked = 0;
-        $scope.loc.ip_scan_percentage = 0;
+        $scope.network.ips_to_check = [];
+        $scope.network.ips_counted = 0;
+        $scope.network.ips_checked = 0;
+        $scope.network.ip_scan_percentage = 0;
 
-        for (var i = 0; i <  $scope.loc.devices.length; i++) {
-            $scope.loc.ips_to_check.push({"ip_address": "http://" + $scope.loc.devices[i].address,"checked":false,"result":"Held in queue"});
+        for (var i = 0; i < $scope.network.devices.length; i++) {
+            $scope.network.ips_to_check.push({
+                "ip_address": "http://" + $scope.network.devices[i].address, "checked": false, "result": "Held in queue"
+            });
         }
 
-        $scope.loc_try_next_in_list();
+        $scope.try_next_network_device_in_list();
 
+    };
+
+    $scope.load_network_device_into_dash = function (device_index) {
+        $scope.dash = $scope.network.devices[device_index];
+        $scope.selected_tab_index = 1;
     };
 
     $scope.getPowerStyle = function(){
@@ -110,49 +124,43 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         }
     };
 
-    $scope.loc_getStatus();
-    $interval(function () {
-        $scope.loc_getStatus();
-        $scope.loc_refreshDevices();
-    }, 60 * 1000);
-
     $scope.get123 = function () {
         return $scope.dash.address.replace(/\d+$/g, '');
     };
 
 
-    $scope.loc_detect_devices = function() {
+    $scope.detect_network_devices = function () {
 
-        localStorage.setItem('loc.scan',JSON.stringify($scope.loc.scan));
+        localStorage.setItem('network.scan', JSON.stringify($scope.network.scan));
 
-        $scope.loc.ips_to_check = [];
-        $scope.loc.ips_counted = 0;
+        $scope.network.ips_to_check = [];
+        $scope.network.ips_counted = 0;
 
         if($scope.loc.replace_detected){
-            $scope.loc.devices = [];
+            $scope.network.devices = [];
         }
 
         var part123 = "http://" + $scope.get123();
 
-        for (var i = $scope.loc.scan.ip_range_start; i <= $scope.loc.scan.ip_range_end; i++) {
-            $scope.loc.ips_to_check.push({"ip_address": part123 + i,"checked":false,"result":"Held in queue"});
+        for (var i = $scope.network.scan.ip_range_start; i <= $scope.network.scan.ip_range_end; i++) {
+            $scope.network.ips_to_check.push({"ip_address": part123 + i, "checked": false, "result": "Held in queue"});
         }
 
-        $scope.loc.ips_checked = 0;
-        $scope.loc.ip_scan_percentage = 0;
+        $scope.network.ips_checked = 0;
+        $scope.network.ip_scan_percentage = 0;
 
         $timeout(function () {
-            $scope.loc_try_next_in_list();
+            $scope.try_next_network_device_in_list();
         }, 2 * 1000);
 
-        $scope.loc_doStore();
+        $scope.store_network_devices();
     };
 
-    $scope.loc_device_merged_in=function(data){
+    $scope.merge_data_into_network_devices = function (data) {
         /* console.log('localdevice checking for merge',data); */
-        for(var i=0;i<$scope.loc.devices.length;i++){
-            if ($scope.loc.devices[i].address == data.address){
-                $scope.loc.devices[i] = data;
+        for (var i = 0; i < $scope.network.devices.length; i++) {
+            if ($scope.network.devices[i].address == data.address) {
+                $scope.network.devices[i] = data;
                 /* console.log('merged'); */
                 return true;
             }
@@ -160,50 +168,50 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         return false;
     };
 
-    $scope.loc_try_next_in_list = function(){
-        for(var i=0;i<$scope.loc.ips_to_check.length;i++){
-            if($scope.loc.ips_to_check[i].checked){
+    $scope.try_next_network_device_in_list = function () {
+        for (var i = 0; i < $scope.network.ips_to_check.length; i++) {
+            if ($scope.network.ips_to_check[i].checked) {
                 //done that one.
             }else{
-                /* console.log('looking for local device at ', $scope.loc.ips_to_check[i]); */
-                var url = $scope.loc.ips_to_check[i].ip_address + "/features.json";
+                /* console.log('looking for local device at ', $scope.network.ips_to_check[i]); */
+                var url = $scope.network.ips_to_check[i].ip_address + "/features.json";
                 var trustedUrl = $sce.trustAsResourceUrl(url);
                 let index = i;
-                $scope.loc.ips_to_check[index].result = 'waiting for response...';
+                $scope.network.ips_to_check[index].result = 'waiting for response...';
 
                 $http.jsonp(trustedUrl, {jsonpCallbackParam: 'callback',timeout:10000}).then(function onSuccess(data) {
                     /* console.log('found a local device!', data.data); */
-                    $scope.loc.ips_to_check[index].result = 'Found device ' + data.data.app_name;
+                    $scope.network.ips_to_check[index].result = 'Found device ' + data.data.app_name;
                     //check that the device isn't in the list.
 
-                    if($scope.loc_device_merged_in(data.data)) {
-                        $scope.loc.ips_to_check[index].result = 'Updated device ' + data.data.app_name;
+                    if ($scope.merge_data_into_network_devices(data.data)) {
+                        $scope.network.ips_to_check[index].result = 'Updated device ' + data.data.app_name;
                     }else {
-                        $scope.loc.devices.push(data.data);
+                        $scope.network.devices.push(data.data);
                         /* console.log('added this device to the local list'); */
                     }
 
                     if ($scope.loc.store_detected) {
-                        $scope.loc_doStore();
+                        $scope.store_network_devices();
                     }
 
                 }).catch(function onError(response) {
-                    /* console.log('No device at:', scope.loc.ips_to_check[index]); */
-                    $scope.loc.ips_to_check[index].result = 'No response';
+                    /* console.log('No device at:', scope.network.ips_to_check[index]); */
+                    $scope.network.ips_to_check[index].result = 'No response';
                 });
 
-                $scope.loc.ips_to_check[i].checked = true;
-                $scope.loc.ips_checked++;
-                $scope.loc.ip_scan_percentage = parseInt(($scope.loc.ips_checked / $scope.loc.ips_to_check.length) * 100);
+                $scope.network.ips_to_check[i].checked = true;
+                $scope.network.ips_checked++;
+                $scope.network.ip_scan_percentage = parseInt(($scope.network.ips_checked / $scope.network.ips_to_check.length) * 100);
 
                 $timeout(function () {
-                    $scope.loc_try_next_in_list();
+                    $scope.try_next_network_device_in_list();
                 }, 2 * 1000);
                 return;
             }
         }
         /* console.log('all local IPs checked.'); */
-        $scope.loc.ips_to_check = [];
+//        $scope.network.ips_to_check = [];
     };
 
     $scope.considerUpdate = function () {
@@ -238,8 +246,8 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         return uuid;
     };
 
-    $scope.loc_doStore = function(){
-        localStorage.setItem('loc.devices',JSON.stringify($scope.loc.devices));
+    $scope.store_network_devices = function () {
+        localStorage.setItem('network.devices', JSON.stringify($scope.network.devices));
     };
 
     $scope.tpl_authenticate = function () {
@@ -357,19 +365,19 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
         $scope.tpl_refreshDevices();
     }
 
-    $scope.loc = {};
+
     $scope.loc.store_detected = true;
-    $scope.loc.devices = JSON.parse(localStorage.getItem('loc.devices'));
-    if($scope.loc.devices == null){
-        $scope.loc.devices=[];
+    $scope.network.devices = JSON.parse(localStorage.getItem('network.devices'));
+    if ($scope.network.devices == null) {
+        $scope.network.devices = [];
     }
 
-    $scope.loc.scan = JSON.parse(localStorage.getItem('loc.scan'));
+    $scope.network.scan = JSON.parse(localStorage.getItem('network.scan'));
 
-    if($scope.loc.scan === null) {
-        $scope.loc.scan = {};
-        $scope.loc.scan.ip_range_start = 2;
-        $scope.loc.scan.ip_range_end = 40;
+    if ($scope.network.scan === null) {
+        $scope.network.scan = {};
+        $scope.network.scan.ip_range_start = 2;
+        $scope.network.scan.ip_range_end = 40;
     }
 
     $scope.selected_tab_index = 0;
@@ -380,6 +388,12 @@ function myDash($scope, $mdToast, $http, $interval, $sce,$timeout) {
             $scope.tpl_getState(i);
         }
     }, $scope.tpl.refresh_rate * 1000);
+
+    $interval(function () {
+        $scope.refresh_network_devices();
+    }, 60 * 1000);
+
+    $scope.add_features_from_this_device();
 
 }
 
