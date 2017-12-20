@@ -30,8 +30,6 @@
 /* create dummy functions, to be overwritten by specifics.h if needed. */
 void RunImplementationSetup(); //repeat this in specifics.h if needed.
 void RunImplementationLoop();  //repeat this in specifics.h if needed.
-void handleRoot();             //repeat this in specifics.h if needed.
-void handleScript();           //repeat this in specifics.h if needed.
 void handleFeatures();         //repeat this in specifics.h if needed.
 void setupForNewDay();         //overwritten after specifics.h
 byte updateEventTimes();       //overwritten after specifics.h
@@ -62,7 +60,6 @@ int timeZoneOffset = 0;     // GMT
 WiFiUDP Udp;
 unsigned int localPort = 8888;  // local port to listen for UDP packets
 time_t getNtpTime();
-void handleRoot();
 void sendNTPpacket(IPAddress &address);
 bool isDst(int day, int month, int dow); //defined below
 
@@ -155,12 +152,14 @@ byte isEventTime(int currentMinuteOfDay) {
 
 void handleScript(){
   Serial.print(F("\nScript request"));
+  httpServer.sendHeader("Cache-Control","max-age=2628000");
   httpServer.send_P ( 200, "application/javascript", SCRIPT_JS);
   Serial.println(F("...done."));
 }
 
 void handleRoot(){  
   Serial.print(F("\nHomepage request"));
+  httpServer.sendHeader("Cache-Control","max-age=2628000");
   httpServer.send_P ( 200, "text/html", INDEX_HTML);
   Serial.println(F("...done."));
 }

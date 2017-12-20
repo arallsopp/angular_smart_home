@@ -20,7 +20,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
     $scope.dash = {"address": "--"};
     $scope.network = {"ips_to_check": []};
     $scope.loc = {};
-
+    $scope.scanning = false;
     $scope.page_ip = '--';
 
     $scope.isRemote = function () {
@@ -96,20 +96,22 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
     };
     $scope.refresh_network_devices = function () {
         /* console.log('refreshing local devices '); */
+        if (!$scope.scanning) { /* don't do it if you're already scanning for devices */
+            $scope.network.ips_to_check = [];
+            $scope.network.ips_counted = 0;
+            $scope.network.ips_checked = 0;
+            $scope.network.ip_scan_percentage = 0;
 
-        $scope.network.ips_to_check = [];
-        $scope.network.ips_counted = 0;
-        $scope.network.ips_checked = 0;
-        $scope.network.ip_scan_percentage = 0;
+            for (var i = 0; i < $scope.network.devices.length; i++) {
+                $scope.network.ips_to_check.push({
+                    "ip_address": "http://" + $scope.network.devices[i].address,
+                    "checked": false,
+                    "result": "Held in queue"
+                });
+            }
 
-        for (var i = 0; i < $scope.network.devices.length; i++) {
-            $scope.network.ips_to_check.push({
-                "ip_address": "http://" + $scope.network.devices[i].address, "checked": false, "result": "Held in queue"
-            });
+            $scope.try_next_network_device_in_list();
         }
-
-        $scope.try_next_network_device_in_list();
-
     };
 
     $scope.load_network_device_into_dash = function (device_index) {
@@ -148,6 +150,7 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
 
         $scope.network.ips_checked = 0;
         $scope.network.ip_scan_percentage = 0;
+        $scope.scanning = true;
 
         $timeout(function () {
             $scope.try_next_network_device_in_list();
@@ -210,12 +213,14 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
                 return;
             }
         }
-        /* console.log('all local IPs checked.'); */
+        $scope.scanning = false;
+        /* console.log('all local IPs checked.');
 //        $scope.network.ips_to_check = [];
+         */
     };
 
     $scope.considerUpdate = function () {
-        console.log("check the slider to see if it got changed");
+        /*console.log("check the slider to see if it got changed");*/
     };
 
     $scope.remoteRequest = function(address){
