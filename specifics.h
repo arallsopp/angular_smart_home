@@ -1,23 +1,21 @@
 /* notes:
  * this is the percentage branch.
- * implementation: belljar
- * largely there, except that the attempts to check things didn't get skipped means that it does it all 3 times.
- * I don't need that in any of the code, tbh.
+ * implementation: nightlight
 */ 
 
 /* nomenclature */
-#define AP_NAME        "BellJar"    //gets used for access point name on wifi configuration and mDNS
-#define ALEXA_DEVICE_1 "bell jar"   //gets used for Alexa discovery and commands (must be lowercase)
-#define AP_DESC        "The belljar lamp in the lounge" //used for dash.
-#define AP_VERSION     "1.1p"
+#define AP_NAME        "NightLight"    //gets used for access point name on wifi configuration and mDNS
+#define ALEXA_DEVICE_1 "night light"   //gets used for Alexa discovery and commands (must be lowercase)
+#define AP_DESC        "Teddy's USB nightlight" //used for dash.
+#define AP_VERSION     "1.2p"
 
 /* parameters for this implementation */
 #define BLUE_LED        BUILTIN_LED          // pin for wemos D1 MINI PRO's onboard blue led
 #define LED_OFF         HIGH                  // let's me flip the values if required, as the huzzah onboard LEDs are reversed.
 #define LED_ON          LOW                 // as line above.
-#define SWITCH_PIN      D2                   // pin connected to PUSH TO CLOSE switch.
-#define FADE_PIN        D1
-#define EVENT_COUNT     2 +1                // zero based array. Option 0 is reserved.
+#define SWITCH_PIN      D6                   // pin connected to PUSH TO CLOSE switch.
+#define FADE_PIN        D2
+#define EVENT_COUNT     4 +1                // zero based array. Option 0 is reserved.
 
 #define BUTTON_PUSHED          1
 #define BUTTON_RELEASED        0  
@@ -50,8 +48,10 @@ typedef struct {
 
 event_time dailyEvents[EVENT_COUNT] = {
   {  0, 0, false, "reserved",            0,       0},
-  { 18, 0, false, "evening light up",  100,   30*60},
-  { 23, 0, false, "night fade out",      0,   60*60}
+  {  7, 0, false, "morning wake up",   100,    5*60},
+  {  8,30, false, "off for the day",     0,       5},
+  { 18,30, false, "evening light up",  100,   30*60},
+  { 20,30, false, "dim for night",      15,  120*60}
 };                       // this is my array of dailyEvents.
 
 struct fade {
@@ -190,7 +190,7 @@ void RunImplementationLoop(){
   updateLEDBrightness(); 
 }
 
-void FirstDeviceOn() {
+bool FirstDeviceOn() {
     Serial.print("Switch 1 turn on ...");
     thisDevice.lastAction = "Powered on by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     
@@ -199,7 +199,7 @@ void FirstDeviceOn() {
     doEvent(0);
 }
 
-void FirstDeviceOff() {
+bool FirstDeviceOff() {
     Serial.print(F("Switch 1 turn off ..."));
     thisDevice.lastAction = "Powered off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
 
