@@ -23,7 +23,7 @@ Switch::Switch(String alexaInvokeName, unsigned int port, CallbackFunction oncb,
     localPort = port;
     onCallback = oncb;
     offCallback = offcb;
-    
+     
     startWebServer();
 }
 
@@ -67,9 +67,9 @@ void Switch::startWebServer(){
 }
  
 void Switch::handleEventservice(){
-  Serial.println(F(" ########## Responding to eventservice.xml ... ########\n"));
+  Serial.println(" ########## Responding to eventservice.xml ... ########\n");
   
-  String eventservice_xml = "<?scpd xmlns=\"urn:Belkin:service-1-0\"?>"
+  String eventservice_xml = "<scpd xmlns=\"urn:Belkin:service-1-0\">"
         "<actionList>"
           "<action>"
             "<name>SetBinaryState</name>"
@@ -79,21 +79,33 @@ void Switch::handleEventservice(){
                 "<name>BinaryState</name>"
                 "<relatedStateVariable>BinaryState</relatedStateVariable>"
                 "<direction>in</direction>"
-              "</argument>"
+                "</argument>"
             "</argumentList>"
-             "<serviceStateTable>"
-              "<stateVariable sendEvents=\"yes\">"
-                "<name>BinaryState</name>"
-                "<dataType>Boolean</dataType>"
-                "<defaultValue>0</defaultValue>"
-              "</stateVariable>"
-              "<stateVariable sendEvents=\"yes\">"
-                "<name>level</name>"
-                "<dataType>string</dataType>"
-                "<defaultValue>0</defaultValue>"
-              "</stateVariable>"
-            "</serviceStateTable>"
           "</action>"
+          "<action>"
+            "<name>GetBinaryState</name>"
+            "<argumentList>"
+              "<argument>"
+                "<retval/>"
+                "<name>BinaryState</name>"
+                "<relatedStateVariable>BinaryState</relatedStateVariable>"
+                "<direction>out</direction>"
+                "</argument>"
+            "</argumentList>"
+          "</action>"
+      "</actionList>"
+        "<serviceStateTable>"
+          "<stateVariable sendEvents=\"yes\">"
+            "<name>BinaryState</name>"
+            "<dataType>Boolean</dataType>"
+            "<defaultValue>0</defaultValue>"
+           "</stateVariable>"
+           "<stateVariable sendEvents=\"yes\">"
+              "<name>level</name>"
+              "<dataType>string</dataType>"
+              "<defaultValue>0</defaultValue>"
+           "</stateVariable>"
+        "</serviceStateTable>"
         "</scpd>\r\n"
         "\r\n";
           
@@ -101,20 +113,36 @@ void Switch::handleEventservice(){
 }
  
 void Switch::handleUpnpControl(){
-  Serial.println(F("########## Responding to  /upnp/control/basicevent1 ... ##########"));      
+  Serial.println("########## Responding to  /upnp/control/basicevent1 ... ##########");      
   
+  //for (int x=0; x <= HTTP.args(); x++) {
+  //  Serial.println(HTTP.arg(x));
+  //}
+
   String request = server->arg(0);      
   Serial.print("request:");
   Serial.println(request);
+  
 
-  if(request.indexOf("<BinaryState>1</BinaryState>") > 0) {
-      Serial.println("Got Turn on request");
-      onCallback();
+  if(request.indexOf("SetBinaryState") >= 0) {
+    if(request.indexOf("<BinaryState>1</BinaryState>") >= 0) {
+        Serial.println("Got Turn on request");
+        switchStatus = onCallback();
+
+        sendRelayState();
+    }
+
+    if(request.indexOf("<BinaryState>0</BinaryState>") >= 0) {
+        Serial.println("Got Turn off request");
+        switchStatus = offCallback();
+        
+        sendRelayState();
+    }
   }
 
-  if(request.indexOf("<BinaryState>0</BinaryState>") > 0) {
-      Serial.println("Got Turn off request");
-      offCallback();
+  if(request.indexOf("GetBinaryState") >= 0) {
+    Serial.println("Got binary state request");
+    sendRelayState();
   }
   
   server->send(200, "text/plain", "");
@@ -125,44 +153,65 @@ void Switch::handleRoot(){
 }
 
 void Switch::handleSetupXml(){
-  Serial.println(F(" ########## Responding to setup.xml ... ########\n"));
+  Serial.println(" ########## Responding to setup.xml ... ########\n");
   
   IPAddress localIP = WiFi.localIP();
   char s[16];
   sprintf(s, "%d.%d.%d.%d", localIP[0], localIP[1], localIP[2], localIP[3]);
-  
+
+
   String setup_xml = "<?xml version=\"1.0\"?>"
-        "<root>"
-         "<device>"
-            "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
-            "<friendlyName>"+ device_name +"</friendlyName>"
-            "<manufacturer>Belkin International Inc.</manufacturer>"
-            "<modelName>Emulated Socket</modelName>"
-            "<modelNumber>3.1415</modelNumber>"
-            "<UDN>uuid:"+ persistent_uuid +"</UDN>"
-            "<serialNumber>221517K0101769</serialNumber>"
-            "<binaryState>0</binaryState>"
-            "<serviceList>"
-              "<service>"
-                  "<serviceType>urn:Belkin:service:basicevent:1</serviceType>"
-                  "<serviceId>urn:Belkin:serviceId:basicevent1</serviceId>"
-                  "<controlURL>/upnp/control/basicevent1</controlURL>"
-                  "<eventSubURL>/upnp/event/basicevent1</eventSubURL>"
-                  "<SCPDURL>/eventservice.xml</SCPDURL>"
-              "</service>"
-          "</serviceList>" 
-          "</device>"
-        "</root>\r\n"
-        "\r\n";
+            "<root>"
+             "<device>"
+                "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
+                "<friendlyName>"+ device_name +"</friendlyName>"
+                "<manufacturer>Belkin International Inc.</manufacturer>"
+                "<modelName>Socket</modelName>"
+                "<modelNumber>3.1415</modelNumber>"
+                "<modelDescription>Belkin Plugin Socket 1.0</modelDescription>\r\n"
+                "<UDN>uuid:"+ persistent_uuid +"</UDN>"
+                "<serialNumber>221517K0101769</serialNumber>"
+                "<binaryState>0</binaryState>"
+                "<serviceList>"
+                  "<service>"
+                      "<serviceType>urn:Belkin:service:basicevent:1</serviceType>"
+                      "<serviceId>urn:Belkin:serviceId:basicevent1</serviceId>"
+                      "<controlURL>/upnp/control/basicevent1</controlURL>"
+                      "<eventSubURL>/upnp/event/basicevent1</eventSubURL>"
+                      "<SCPDURL>/eventservice.xml</SCPDURL>"
+                  "</service>"
+              "</serviceList>" 
+              "</device>"
+            "</root>\r\n"
+            "\r\n";
+ 
         
     server->send(200, "text/xml", setup_xml.c_str());
     
-    Serial.print(F("Sending :"));
+    Serial.print("Sending :");
     Serial.println(setup_xml);
 }
 
 String Switch::getAlexaInvokeName() {
     return device_name;
+}
+
+void Switch::sendRelayState() {
+  String body = 
+      "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>\r\n"
+      "<u:GetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">\r\n"
+      "<BinaryState>";
+      
+  body += (switchStatus ? "1" : "0");
+  
+  body += "</BinaryState>\r\n"
+      "</u:GetBinaryStateResponse>\r\n"
+      "</s:Body> </s:Envelope>\r\n";
+  
+  server->send(200, "text/xml", body.c_str());
+
+  Serial.print("Sending :");
+  Serial.println(body);
 }
 
 void Switch::respondToSearch(IPAddress& senderIP, unsigned int senderPort) {
@@ -195,4 +244,3 @@ void Switch::respondToSearch(IPAddress& senderIP, unsigned int senderPort) {
 
    Serial.println("Response sent !");
 }
-
