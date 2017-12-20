@@ -216,6 +216,8 @@ void handleAction(){
   bool settingSkip = (httpServer.argName(0) == "skip");
   bool settingTimer = (httpServer.argName(0) == "timer");
   bool settingStart = (httpServer.argName(0) == "start");
+  bool settingDeferredEvent =  (httpServer.argName(0) == "end");
+
   bool usingCallback = (httpServer.hasArg("callback"));
   String actionResult = "";
 
@@ -246,6 +248,11 @@ void handleAction(){
     dailyEvents[0].transitionDurationInSecs = 3;
     doEvent(0);
        actionResult = "{\"message\":\"Set brightness\"}";    
+  }else if(settingDeferredEvent){
+    dailyEvents[0].target_percentage = httpServer.arg(1).toInt();
+    dailyEvents[0].transitionDurationInSecs = httpServer.arg(1).toInt() * 60;
+    doEvent(0);
+       actionResult = "{\"message\":\"Started transition\"}";    
   }else{
        actionResult = "{\"message\":\"Did not recognise action\"}";
   } 
