@@ -249,7 +249,7 @@ void handleAction(){
     doEvent(0);
        actionResult = "{\"message\":\"Set brightness\"}";    
   }else if(settingDeferredEvent){
-    dailyEvents[0].target_percentage = httpServer.arg(1).toInt();
+    dailyEvents[0].target_percentage = httpServer.arg(0).toInt();
     dailyEvents[0].transitionDurationInSecs = httpServer.arg(1).toInt() * 60;
     doEvent(0);
        actionResult = "{\"message\":\"Started transition\"}";    
