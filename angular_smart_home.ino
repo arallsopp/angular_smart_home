@@ -242,6 +242,10 @@ void setup(){
     httpUpdater.setup(&httpServer);
     httpServer.on("/", handleRoot);
     httpServer.on("/script.js", handleScript);
+    httpServer.on("/sync", [](){ 
+      while (timeStatus() == timeNotSet); //keep trying to set the time
+      httpServer.send(200, "text/plain", "sync'd");
+    });
     httpServer.on("/action.php", handleAction);
     httpServer.on("/features.json",handleFeatures);
     httpServer.begin();
@@ -255,7 +259,8 @@ void setup(){
     Serial.println(Udp.localPort());
     Serial.println(F("waiting for sync"));
     setSyncProvider(getNtpTime);
-    setSyncInterval(300);
+    
+    setSyncInterval(10 * 60);
 
     Serial.println(F("Running implementation setup"));
     RunImplementationSetup();
