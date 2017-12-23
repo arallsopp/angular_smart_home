@@ -1,13 +1,13 @@
 This project lays out a framework for a home automation ecosystem, running on various ESP8266 chips and/or TPLink smart plugs.
 
-##The following features are included:
+## The following features are included:
 
-###Setup
+### Setup
 - Each device supports NTP time lookup for automatic clock synchronisation.
 - Each device offers a WiFi manager. If it cannot connect to your wifi with known creds on boot, it will set itself up as an access point. Connect to the access point by joining **its** WiFi, and provide the SSID and pass for your own. After that, it will reboot and load these credentials by default.
 - Each device can identify itself to Amazon alexa scans. Just ask Alexa to 'discover devices'.
 
-###Operation
+### Operation
 
 - Each device can specify its own schedule of events to run automatically.
 - Each device can respond to Amazon alexa on/off commands for manual override.
@@ -25,11 +25,11 @@ As such, there are 4 ways that each device can be controlled
 4. Via a web browser aimed at any device running this ecosystem, within the local network.
  
 
-##Types of device used:
+## Types of device used:
 
 My home projects use Adafruit Feather Huzzahs, and Wemos D1 Mini Pros.
 
-##Branches
+## Branches
 
 The code is arranged so that only specifics.h changes between implementations. All branches are able to consume and control the features of all other branches.
 
