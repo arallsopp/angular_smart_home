@@ -1,12 +1,5 @@
 'use strict';
 
-/* the theory:
-
- can I remove 'scope.dash' entirely, and load network devices screen first,
- then have it select the device if i want to and load those details?
-
- */
-
 angular.module('myApp', ['ngMaterial']);
 
 myDash.$inject = ['$scope', '$mdToast','$http','$interval','$sce','$timeout'];
@@ -17,6 +10,8 @@ angular.module('myApp').controller('dash', myDash)
     }]);
 
 function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
+    $scope.duration = 0;
+
     $scope.dash = {"address": "--"};
     $scope.network = {"ips_to_check": []};
     $scope.loc = {};
@@ -36,11 +31,15 @@ function myDash($scope, $mdToast, $http, $interval, $sce, $timeout) {
             url = 'http://' + $scope.dash.address + '/' + url;
         }
         var param = false;
-
+        window.scope = $scope;
         switch (mode) {
             case 'percentage':
-                $scope.dash.is_powered = ($scope.dash.percentage > 0);
-                param = $scope.dash.request.start_param + "=" + $scope.dash.percentage ;
+                if ($scope.duration) {
+                    param = $scope.dash.request.end_param + "=" + $scope.dash.percentage + "&" + $scope.dash.request.duration_param + "=" + $scope.duration;
+                } else {
+                    $scope.dash.is_powered = ($scope.dash.percentage > 0);
+                    param = $scope.dash.request.start_param + "=" + $scope.dash.percentage;
+                }
                 break;
 
             case 'toggle':
