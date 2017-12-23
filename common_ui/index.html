@@ -55,6 +55,20 @@
                 </div>
                 <md-divider></md-divider>
             </md-list-item>
+            <md-list-item class="md-2-line" ng-show="dash.request.duration_param">
+                <div class="md-list-item-text">
+                    <h3>Duration<span hide show-gt-xs> of transition</span>: <span
+                            ng-show="duration == 0">Immediate</span>
+                        <span ng-show="duration != 0">{{duration}} mins.</span>
+                    </h3>
+                </div>
+                <div class="md-list-item-text" style="padding:0 8px">
+                    <md-slider flex min="0" max="120" ng-model="duration"
+                               aria-label="duration"></md-slider>
+                </div>
+                <md-divider></md-divider>
+            </md-list-item>
+
             <md-list-item class="md-2-line">
                 <div class="md-list-item-text">
                     <h3>Timer</h3>
