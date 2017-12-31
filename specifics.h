@@ -291,14 +291,14 @@ void RunImplementationLoop(){
   handleLocalSwitch();
 }
 
-void FirstDeviceOn() {
+bool FirstDeviceOn() {
     Serial.print("Switch 1 turn on ...");
     thisDevice.lastAction = "Powered on by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
 
     animateBlindLouvres(POSITION_OPEN);
 }
 
-void FirstDeviceOff() {
+bool FirstDeviceOff() {
     Serial.print(F("Switch 1 turn off ..."));
     thisDevice.lastAction = "Powered off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
 
