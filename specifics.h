@@ -161,13 +161,13 @@ void RunImplementationLoop(){
   digitalWrite(BLUE_LED, (thisDevice.powered ? LED_ON : LED_OFF)); 
 }
 
-void FirstDeviceOn() {
+bool FirstDeviceOn() {
     Serial.print("Switch 1 turn on ...");
     thisDevice.lastAction = "Powered on by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     thisDevice.powered = true;
 }
 
-void FirstDeviceOff() {
+bool FirstDeviceOff() {
     Serial.print(F("Switch 1 turn off ..."));
     thisDevice.lastAction = "Powered off by Alexa at " + padDigit(hour()) + ":" + padDigit(minute()) + ":" + padDigit(second());
     thisDevice.powered = false;
